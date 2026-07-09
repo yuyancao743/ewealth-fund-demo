@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基金公司 - 发行商管理 - 金马证券中台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2f5;color:#333;font-size:14px}
+.container{display:flex;height:100vh}
+.sidebar{width:220px;background:linear-gradient(180deg,#001529,#002140);color:#fff;flex-shrink:0;display:flex;flex-direction:column}
+.logo{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.logo-dot{width:8px;height:8px;background:#1890ff;border-radius:50%}
+.nav-menu{flex:1;overflow-y:auto;padding:8px 0;font-size:13px}
+.nav-item{padding:10px 16px;color:rgba(255,255,255,.65);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:#1890ff;color:#fff}
+.nav-sub{background:rgba(0,0,0,.12)}
+.nav-sub .nav-item{padding-left:32px}
+.nav-sub .nav-sub .nav-item{padding-left:48px;font-size:12px}
+.nav-parent{font-weight:500}
+.muted{opacity:.55}
+.main-content{flex:1;display:flex;flex-direction:column;min-width:0}
+.header{height:56px;background:#fff;border-bottom:1px solid #e8e8e8;padding:0 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.breadcrumb{font-size:14px;color:#666}
+.page-body{flex:1;overflow:auto;padding:20px 24px}
+.page-title{font-size:18px;font-weight:600;margin-bottom:16px}
+.filter-bar{background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.05);display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.filter-item label{display:block;font-size:12px;color:#666;margin-bottom:4px}
+.filter-input,.filter-select{padding:8px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-width:160px}
+.table-section{background:#fff;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden}
+.table-toolbar{padding:14px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f0f0f0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#fafafa;padding:12px 14px;text-align:left;color:#666;font-weight:600;border-bottom:1px solid #f0f0f0;white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+tr.data-row:hover{background:#fafafa}
+.badge{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.badge-active{background:#f6ffed;color:#52c41a}
+.badge-inactive{background:#f5f5f5;color:#999}
+.btn{padding:8px 16px;border-radius:4px;font-size:14px;cursor:pointer;border:1px solid transparent}
+.btn-sm{padding:5px 12px;font-size:13px}
+.btn-primary{background:#1890ff;color:#fff;border-color:#1890ff}
+.btn-secondary{background:#fff;color:#666;border-color:#d9d9d9}
+.btn-link{background:none;border:none;color:#1890ff;cursor:pointer;font-size:13px;padding:2px 6px}
+.btn-link.danger{color:#ff4d4f}
+.pagination{padding:12px 20px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;font-size:13px;color:#666}
+.pagination-info{margin-right:auto}
+.page-btns{display:flex;align-items:center;gap:4px}
+.page-btn{min-width:32px;height:32px;padding:0 8px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:13px}
+.page-btn:hover:not(:disabled){border-color:#1890ff;color:#1890ff}
+.page-btn.active{background:#1890ff;border-color:#1890ff;color:#fff}
+.page-btn:disabled{color:#bbb;cursor:not-allowed;background:#f5f5f5}
+.page-btn.ellipsis{border:none;background:none;min-width:24px;cursor:default}
+.page-size-select{padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px}
+.page-jump{display:flex;align-items:center;gap:6px}
+.page-jump input{width:48px;padding:4px 6px;border:1px solid #d9d9d9;border-radius:4px;text-align:center}
+.empty-state{text-align:center;padding:48px;color:#999}
+.toast{position:fixed;top:20px;right:20px;background:#fff;padding:12px 20px;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.15);display:none;z-index:1100;border-left:4px solid #52c41a}
+.toast.show{display:block}
+
+/* 抽屉：仅在打开时覆盖，不占默认布局 */
+.drawer-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:800;opacity:0;visibility:hidden;transition:opacity .25s}
+.drawer-mask.open{opacity:1;visibility:visible}
+.drawer{position:fixed;top:0;right:0;width:520px;max-width:92vw;height:100vh;background:#fff;z-index:900;box-shadow:-4px 0 24px rgba(0,0,0,.12);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s ease}
+.drawer.open{transform:translateX(0)}
+.drawer-hd{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-hd h2{font-size:16px;font-weight:600}
+.drawer-close{background:none;border:none;font-size:22px;color:#999;cursor:pointer;line-height:1;padding:4px}
+.drawer-close:hover{color:#333}
+.drawer-body{flex:1;overflow-y:auto}
+.drawer-ft{padding:14px 20px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:10px;flex-shrink:0}
+.panel-title{padding:12px 20px;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0;background:#fafafa}
+.kv-table{width:100%;border-collapse:collapse}
+.kv-table tr{border-bottom:1px solid #f0f0f0}
+.kv-table th{width:150px;padding:12px 20px;text-align:left;font-size:13px;color:#666;font-weight:500;background:#fafafa;vertical-align:middle}
+.kv-table td{padding:10px 20px;vertical-align:middle}
+.form-input,.form-select{width:100%;padding:8px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;font-family:inherit}
+.form-input:focus,.form-select:focus{border-color:#1890ff;outline:none;box-shadow:0 0 0 2px rgba(24,144,255,.12)}
+.kv-val{font-size:14px;font-weight:600;color:#333;word-break:break-all}
+.form-textarea{width:100%;min-height:88px;padding:8px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical}
+.form-textarea:focus{border-color:#1890ff;outline:none;box-shadow:0 0 0 2px rgba(24,144,255,.12)}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="sidebarMount"></div>
+  <div class="main-content">
+    <div class="header">
+      <div class="breadcrumb">产品中心 / <strong>发行商管理</strong> / 基金</div>
+      <div>管理员</div>
+    </div>
+  <!-- 默认全宽列表 -->
+    <div class="page-body">
+      <div class="page-title">基金公司配置</div>
+      <div class="filter-bar">
+        <div class="filter-item">
+          <label>基金公司</label>
+          <input type="text" class="filter-input" id="filterName" placeholder="搜索基金公司名称">
+        </div>
+        <div class="filter-item">
+          <label>邮箱</label>
+          <input type="text" class="filter-input" id="filterEmail" placeholder="Dealing 邮箱">
+        </div>
+        <div class="filter-item">
+          <label>状态</label>
+          <select class="filter-select" id="filterStatus">
+            <option value="">全部</option>
+            <option value="ACTIVE">启用</option>
+            <option value="INACTIVE">停用</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="applyFilter()">搜索</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetFilter()">重置</button>
+      </div>
+      <div class="table-section">
+        <div class="table-toolbar" style="justify-content:flex-end">
+          <button class="btn btn-primary" onclick="openCreate()">+ 新增</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>基金公司</th>
+              <th>Dealing 联系人</th>
+              <th>电话</th>
+              <th>邮箱</th>
+              <th>收款银行</th>
+              <th>币种</th>
+              <th>状态</th>
+              <th>更新时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="pagination" id="paginationBar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 抽屉：新增 / 查看 / 编辑 -->
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-hd">
+    <h2 id="drawerTitle">新增基金公司</h2>
+    <button class="drawer-close" onclick="closeDrawer()" title="关闭">&times;</button>
+  </div>
+  <div class="drawer-body">
+    <div class="panel-title">基金公司 · 联系方式</div>
+    <table class="kv-table" id="contactTable"></table>
+    <div class="panel-title">认购汇款银行信息</div>
+    <table class="kv-table" id="bankTable"></table>
+    <div class="panel-title">其他</div>
+    <table class="kv-table" id="otherTable"></table>
+  </div>
+  <div class="drawer-ft" id="drawerFooter"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="data/mof_sidebar.js"></script>
+<script src="data/fund_house_publishers.js"></script>
+<script>
+const FIELDS = [
+  'fund_company_name', 'dealing_contact', 'phone', 'email', 'fax',
+  'receiving_bank', 'account_name', 'account_number', 'swift', 'currency', 'status', 'remark'
+];
+const REQUIRED = ['fund_company_name', 'dealing_contact', 'phone', 'email', 'receiving_bank', 'account_name', 'account_number', 'swift', 'currency'];
+const CONTACT_FIELDS = [
+  ['fund_company_name', '基金公司', true],
+  ['dealing_contact', 'Dealing 联系人', true],
+  ['phone', '电话', true],
+  ['email', '邮箱', true],
+  ['fax', '传真', false]
+];
+const BANK_FIELDS = [
+  ['receiving_bank', '收款银行', true],
+  ['account_name', '账户名称', true],
+  ['account_number', '账号', true],
+  ['swift', 'SWIFT', true],
+  ['currency', '币种', true, 'select']
+];
+
+let publishers = [...FUND_HOUSE_PUBLISHERS];
+let pageState = { current: 1, pageSize: 10 };
+let filters = { name: '', email: '', status: '' };
+let drawerId = null;
+let drawerMode = null; // view | edit | create
+let nextId = publishers.length + 1;
+
+document.getElementById('sidebarMount').outerHTML = mofSidebarHtml('issuer-fund');
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function getFiltered() {
+  return publishers.filter(p => {
+    if (filters.name && !p.fund_company_name.toLowerCase().includes(filters.name.toLowerCase())) return false;
+    if (filters.email && !p.email.toLowerCase().includes(filters.email.toLowerCase())) return false;
+    if (filters.status && p.status !== filters.status) return false;
+    return true;
+  });
+}
+
+function getPaged() {
+  const all = getFiltered();
+  const total = all.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageState.pageSize));
+  if (pageState.current > totalPages) pageState.current = totalPages;
+  const start = (pageState.current - 1) * pageState.pageSize;
+  return { total, totalPages, rows: all.slice(start, start + pageState.pageSize) };
+}
+
+function goPage(p) {
+  const { totalPages } = getPaged();
+  if (p < 1 || p > totalPages) return;
+  pageState.current = p;
+  renderTable();
+}
+
+function changePageSize(size) {
+  pageState.pageSize = parseInt(size, 10) || 10;
+  pageState.current = 1;
+  renderTable();
+}
+
+function jumpToPage() {
+  const p = parseInt(document.getElementById('jumpPageInput')?.value, 10);
+  if (p) goPage(p);
+}
+
+function applyFilter() {
+  filters = {
+    name: document.getElementById('filterName').value.trim(),
+    email: document.getElementById('filterEmail').value.trim(),
+    status: document.getElementById('filterStatus').value
+  };
+  pageState.current = 1;
+  renderTable();
+}
+
+function resetFilter() {
+  document.getElementById('filterName').value = '';
+  document.getElementById('filterEmail').value = '';
+  document.getElementById('filterStatus').value = '';
+  filters = { name: '', email: '', status: '' };
+  pageState.current = 1;
+  renderTable();
+}
+
+function renderTable() {
+  const { rows, total, totalPages } = getPaged();
+  document.getElementById('tableBody').innerHTML = rows.length ? rows.map(p => `
+    <tr class="data-row">
+      <td><strong>${p.fund_company_name}</strong></td>
+      <td>${p.dealing_contact}</td>
+      <td>${p.phone}</td>
+      <td>${p.email}</td>
+      <td>${p.receiving_bank}</td>
+      <td>${p.currency}</td>
+      <td><span class="badge badge-${p.status === 'ACTIVE' ? 'active' : 'inactive'}">${p.status === 'ACTIVE' ? '启用' : '停用'}</span></td>
+      <td style="font-size:12px;color:#666">${p.updated_at}</td>
+      <td>
+        <button class="btn-link" onclick="openView('${p.id}')">查看</button>
+        <button class="btn-link" onclick="openEdit('${p.id}')">编辑</button>
+        <button class="btn-link danger" onclick="deletePublisher('${p.id}')">删除</button>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="9"><div class="empty-state">暂无数据</div></td></tr>`;
+  document.getElementById('paginationBar').innerHTML = mofPaginationHtml(total, pageState.current, pageState.pageSize, totalPages);
+}
+
+function buildFieldRow(key, label, required, type, value, editable) {
+  const req = required ? '<span class="req">*</span>' : '';
+  let input;
+  if (!editable) {
+    input = key === 'remark'
+      ? `<span class="kv-val" style="white-space:pre-wrap">${value || '—'}</span>`
+      : `<span class="kv-val">${value || '—'}</span>`;
+  } else if (type === 'textarea' || key === 'remark') {
+    input = `<textarea class="form-textarea" id="f_${key}" placeholder="请输入${label}">${(value??'').toString()}</textarea>`;
+  } else if (type === 'select' && key === 'currency') {
+    input = `<select class="form-select" id="f_${key}">
+      ${['USD','HKD','CNY','EUR'].map(c => `<option value="${c}" ${value===c?'selected':''}>${c}</option>`).join('')}
+    </select>`;
+  } else if (key === 'status') {
+    input = `<select class="form-select" id="f_${key}">
+      <option value="ACTIVE" ${value==='ACTIVE'?'selected':''}>启用</option>
+      <option value="INACTIVE" ${value==='INACTIVE'?'selected':''}>停用</option>
+    </select>`;
+  } else {
+    input = `<input class="form-input" id="f_${key}" value="${(value??'').toString().replace(/"/g,'&quot;')}" placeholder="请输入${label}">`;
+  }
+  return `<tr><th>${req}${label}</th><td>${input}</td></tr>`;
+}
+
+function getRecord() {
+  if (drawerMode === 'create') return {};
+  return publishers.find(p => p.id === drawerId) || {};
+}
+
+function renderDrawerForm() {
+  const record = getRecord();
+  const editable = drawerMode === 'edit' || drawerMode === 'create';
+
+  document.getElementById('contactTable').innerHTML = CONTACT_FIELDS.map(([k,l,r]) =>
+    buildFieldRow(k, l, r, 'text', record[k], editable)).join('');
+  document.getElementById('bankTable').innerHTML = BANK_FIELDS.map(([k,l,r,t]) =>
+    buildFieldRow(k, l, r, t, record[k], editable)).join('');
+  document.getElementById('otherTable').innerHTML = [
+    buildFieldRow('status', '状态', false, 'select', record.status || 'ACTIVE', editable),
+    buildFieldRow('remark', '备注', false, 'textarea', record.remark || '', editable)
+  ].join('');
+
+  const titles = { create: '新增', edit: '编辑基金公司', view: record.fund_company_name || '基金公司详情' };
+  document.getElementById('drawerTitle').textContent = titles[drawerMode];
+
+  const ft = document.getElementById('drawerFooter');
+  if (drawerMode === 'view') {
+    ft.innerHTML = `
+      <button class="btn btn-secondary" onclick="closeDrawer()">关闭</button>
+      <button class="btn btn-primary" onclick="openEdit('${drawerId}')">编辑</button>`;
+  } else {
+    ft.innerHTML = `
+      <button class="btn btn-secondary" onclick="closeDrawer()">取消</button>
+      <button class="btn btn-primary" onclick="savePublisher()">保存</button>`;
+  }
+}
+
+function openDrawer(mode, id) {
+  drawerMode = mode;
+  drawerId = id || null;
+  renderDrawerForm();
+  document.getElementById('drawerMask').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  document.getElementById('drawerMask').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  document.body.style.overflow = '';
+  drawerId = null;
+  drawerMode = null;
+}
+
+function openCreate() { openDrawer('create'); }
+function openView(id) { openDrawer('view', id); }
+function openEdit(id) { openDrawer('edit', id); }
+
+function readFormData() {
+  const data = {};
+  FIELDS.forEach(k => {
+    const el = document.getElementById('f_' + k);
+    if (el) data[k] = el.value.trim();
+  });
+  return data;
+}
+
+function savePublisher() {
+  const data = readFormData();
+  for (const k of REQUIRED) {
+    if (!data[k]) {
+      alert('请填写所有必填项');
+      document.getElementById('f_' + k)?.focus();
+      return;
+    }
+  }
+  const now = new Date();
+  const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  if (drawerMode === 'create') {
+    const id = 'FH' + String(nextId++).padStart(3, '0');
+    publishers.unshift({ id, ...data, updated_at: ts, updated_by: '管理员' });
+    showToast('新增成功');
+  } else {
+    const idx = publishers.findIndex(p => p.id === drawerId);
+    if (idx >= 0) {
+      publishers[idx] = { ...publishers[idx], ...data, updated_at: ts };
+      showToast('保存成功');
+    }
+  }
+  closeDrawer();
+  renderTable();
+}
+
+function deletePublisher(id) {
+  if (!confirm('确定删除该基金公司配置？')) return;
+  publishers = publishers.filter(p => p.id !== id);
+  if (drawerId === id) closeDrawer();
+  showToast('已删除');
+  renderTable();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderTable();
+  const urlId = new URLSearchParams(location.search).get('id');
+  if (urlId && publishers.find(p => p.id === urlId)) openView(urlId);
+});
+</script>
+</body>
+</html>

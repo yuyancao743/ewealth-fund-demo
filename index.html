@@ -244,7 +244,7 @@ body.route-detail .pk-bar{display:none!important}
   </div>
 </div>
 
-<script src="data/mmf_products.js?v=20260709a"></script>
+<script src="data/mmf_products.js?v=20260709e"></script>
 <script>
 /* ── Hash Router ── */
 const router = {
@@ -343,9 +343,11 @@ function featuredCardName(f) {
   return f.featured_name || f.product_name;
 }
 
-function showTradeToast() {
+function showTradeToast(code) {
   const t = document.getElementById('tradeToast');
-  t.textContent = '认购、赎回请拨打 +852 2153 3838';
+  const f = code ? findFund(code) : null;
+  const paused = f && typeof isTradeDisabled === 'function' && isTradeDisabled(f);
+  t.textContent = paused ? '产品暂时无法购买' : '认购、赎回请拨打 +852 2153 3838';
   t.classList.add('show');
   clearTimeout(showTradeToast._t);
   showTradeToast._t = setTimeout(() => t.classList.remove('show'), 2800);
@@ -353,7 +355,8 @@ function showTradeToast() {
 
 function tradeBtn(className, fund) {
   const paused = typeof isTradeDisabled === 'function' && isTradeDisabled(fund);
-  return `<button type="button" class="${className}${paused ? ' disabled' : ''}" ${paused ? 'disabled' : ''} onclick="showTradeToast()">交易</button>`;
+  const code = (fund.product_code || '').replace(/'/g, "\\'");
+  return `<button type="button" class="${className}${paused ? ' disabled' : ''}" onclick="showTradeToast('${code}')">交易</button>`;
 }
 
 function lblRisk(level) {
@@ -578,7 +581,9 @@ function buildDetailTabs(f) {
   const tabs = [{ id: 'sec-nav', label: '净值走势' }];
   const p = f.perf || {};
   const hasPerf = (typeof hasCumulativePerf === 'function' && hasCumulativePerf(p))
-    || Object.keys(p.annual || {}).length > 0;
+    || Object.keys(p.annual || {}).length > 0
+    || (p.rsi != null && p.rsi !== '')
+    || (typeof hasMonthlyPerf === 'function' && hasMonthlyPerf(p));
   if (hasPerf) tabs.push({ id: 'sec-performance', label: '基金表现' });
   tabs.push({ id: 'sec-overview', label: '基金概况' });
   if (f.fund_objective || f.strategy) tabs.push({ id: 'sec-objective', label: '目标与策略' });
@@ -616,12 +621,24 @@ function renderPerformanceBlock(f) {
   }
   const annual = p.annual || {};
   const years = Object.keys(annual).map(Number).filter(y => !Number.isNaN(y)).sort((a, b) => a - b);
-  if (years.length) {
+  const hasRsi = p.rsi != null && p.rsi !== '';
+  if (years.length || hasRsi) {
+    const cols = [...years];
+    if (hasRsi) cols.push('成立日至今');
     html += `<div style="font-size:.8rem;font-weight:600;color:#374151;margin:12px 0 6px">年度表现</div>
       <table class="perf-annual-table">
-        <thead><tr>${years.map(y => `<th>${y}</th>`).join('')}</tr></thead>
-        <tbody><tr>${years.map(y => `<td class="positive">${fmtPct(annual[y])}</td>`).join('')}</tr></tbody>
+        <thead><tr>${cols.map(y => `<th>${y}</th>`).join('')}</tr></thead>
+        <tbody><tr>${cols.map(y => `<td class="positive">${y === '成立日至今' ? fmtPct(p.rsi) : fmtPct(annual[y])}</td>`).join('')}</tr></tbody>
       </table>`;
+  }
+  const year = new Date().getFullYear();
+  if (typeof hasMonthlyPerf === 'function' && hasMonthlyPerf(p, year)) {
+    const monthKeys = Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`);
+    const monthly = p.monthly || {};
+    html += `<div style="font-size:.8rem;font-weight:600;color:#374151;margin:12px 0 6px">${year}年月度表现</div>
+      <div class="perf-grid">
+        ${monthKeys.map((k, i) => `<div class="perf-cell"><span>${i + 1}月</span><strong class="positive">${fmtPct(monthly[k])}</strong></div>`).join('')}
+      </div>`;
   }
   return html || '<div class="empty" style="padding:1rem">暂无表现数据</div>';
 }
@@ -838,6 +855,7 @@ function renderDetail(f) {
     <div class="card-title">基金文件</div>
     ${renderDocs(f)}
   </div>`);
+  const tagPills = (f.product_tags || []).slice(0, 4).map(t => `<span class="pill-detail">${t}</span>`).join('');
   document.getElementById('detailRoot').innerHTML = `
     <div class="card">
       <div class="detail-hero-head">
@@ -847,12 +865,7 @@ function renderDetail(f) {
         </div>
         ${tradeBtn('btn-trade btn-trade-lg', f)}
       </div>
-      <div class="pills">
-        <span class="pill-detail">${catLabel(f)}</span>
-        <span class="pill-detail">${riskLabel(f.fund_inv_risk_level)}</span>
-        <span class="pill-detail">${f.share_class_label || '—'}</span>
-        <span class="pill-detail">${f.base_ccy}</span>
-      </div>
+      ${tagPills ? `<div class="pills">${tagPills}</div>` : ''}
       <div class="overview">
         <div class="ov-item"><div class="ov-label">最近净值 (${f.nav_date})</div><div class="ov-val">${f.nav?.toFixed(4)||'—'}</div></div>
         <div class="ov-item"><div class="ov-label">近1月</div><div class="ov-val positive">${fmtPct(f.perf?.m1)}</div></div>

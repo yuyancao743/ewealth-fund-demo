@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基金产品库原型导航 | Goldhorse</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(160deg, #0f172a 0%, #1e293b 45%, #334155 100%);
+      min-height: 100vh;
+      color: #e2e8f0;
+      padding: 48px 20px;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; }
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .sub { color: #94a3b8; font-size: 14px; margin-bottom: 40px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(8px);
+    }
+    .card h2 { font-size: 18px; margin-bottom: 6px; color: #f8fafc; }
+    .card p { font-size: 13px; color: #94a3b8; margin-bottom: 16px; line-height: 1.6; }
+    .links { display: flex; flex-direction: column; gap: 10px; }
+    a.btn {
+      display: block;
+      text-decoration: none;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: transform .15s, box-shadow .15s;
+    }
+    a.btn:hover { transform: translateY(-1px); }
+    a.primary { background: #2563eb; color: #fff; }
+    a.primary:hover { box-shadow: 0 4px 20px rgba(37,99,235,.4); }
+    a.secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.12); }
+    a.secondary:hover { background: rgba(255,255,255,0.12); }
+    .foot { margin-top: 40px; font-size: 12px; color: #64748b; text-align: center; }
+    code { background: rgba(0,0,0,.25); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>基金产品库 HTML 原型</h1>
+    <p class="sub">GSL 中台 + eWealth Hub · GitHub Pages 在线演示 · 数据为 Mock，无真实后端</p>
+
+    <div class="grid">
+      <section class="card">
+        <h2>eWealth Hub · 产品甄选</h2>
+        <p>基金产品列表、详情、PK 对比、Banner、精选货架。路由：<code>#/list</code>、<code>#/detail/{code}</code></p>
+        <div class="links">
+          <a class="btn primary" href="./index.html#/list">基金产品列表</a>
+          <a class="btn secondary" href="./index.html#/detail/HK0000720752">产品详情示例（平安货币基金）</a>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>GSL 中台 · 基金产品库</h2>
+        <p>产品库列表与详情四 Tab、上架/下架/暂停、Banner 配置、发行商管理。</p>
+        <div class="links">
+          <a class="btn primary" href="./mof/Fund_Product_Library_List.html">基金新 → 产品库</a>
+          <a class="btn secondary" href="./mof/Ops_Banner_Config.html">运营配置 → 活动配置</a>
+          <a class="btn secondary" href="./mof/Issuer_Fund_House_List.html">发行商管理 → 基金</a>
+        </div>
+      </section>
+    </div>
+
+    <p class="foot">仓库：<a href="https://github.com/yuyancao743/ewealth-fund-demo" style="color:#93c5fd">github.com/yuyancao743/ewealth-fund-demo</a></p>
+  </div>
+</body>
+</html>

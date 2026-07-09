@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>产品库 - 基金新 - 金马证券中台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2f5;color:#333;font-size:14px}
+.container{display:flex;height:100vh}
+.sidebar{width:220px;background:linear-gradient(180deg,#001529,#002140);color:#fff;flex-shrink:0;display:flex;flex-direction:column}
+.logo{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.logo-dot{width:8px;height:8px;background:#1890ff;border-radius:50%}
+.nav-menu{flex:1;overflow-y:auto;padding:8px 0;font-size:13px}
+.nav-item{padding:10px 16px;color:rgba(255,255,255,.65);cursor:pointer}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:#1890ff;color:#fff}
+.nav-sub{background:rgba(0,0,0,.12)}
+.nav-sub .nav-item{padding-left:32px}
+.nav-sub .nav-sub .nav-item{padding-left:48px;font-size:12px}
+.nav-parent{font-weight:500}.muted{opacity:.55}
+.main-content{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+.header{height:56px;background:#fff;border-bottom:1px solid #e8e8e8;padding:0 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.breadcrumb{font-size:14px;color:#666}
+.header-actions{display:flex;gap:8px;align-items:center}
+.content{flex:1;padding:20px 24px;overflow:auto}
+.view{display:none}.view.active{display:block}
+.view-detail{padding-bottom:80px;max-width:1200px}
+/* List */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+.stat-card{background:#fff;border-radius:8px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.05);border-left:4px solid #52c41a}
+.stat-card.delisted{border-color:#ff4d4f}.stat-card.paused{border-color:#722ed1}
+.stat-label{font-size:13px;color:#999;margin-bottom:8px}.stat-value{font-size:28px;font-weight:700}
+.filter-box{background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.search-input{width:100%;padding:10px 14px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;margin-bottom:12px}
+.filter-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.filter-item label{display:block;font-size:12px;color:#666;margin-bottom:4px}
+.filter-select{padding:8px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-width:140px}
+.btn{padding:8px 16px;border-radius:4px;font-size:14px;cursor:pointer;border:1px solid #d9d9d9;background:#fff;color:#333}
+.btn-primary{background:#1890ff;color:#fff;border-color:#1890ff}
+.btn-secondary{background:#fff;color:#666;border-color:#d9d9d9}
+.btn-success{background:#52c41a;color:#fff;border-color:#52c41a}
+.btn-scrape{color:#52c41a;border-color:#52c41a}
+.btn-link{background:none;border:none;color:#1890ff;cursor:pointer;font-size:12px;padding:2px 4px;margin-right:6px}
+.btn-link-muted{color:#666}
+.btn-link-warn{color:#fa8c16}
+.table-toolbar{padding:14px 20px;display:flex;justify-content:flex-end;gap:8px;border-bottom:1px solid #f0f0f0}
+.import-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.import-modal.show{display:flex}
+.import-modal-body{background:#fff;border-radius:8px;padding:24px;max-width:480px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.import-modal-body h3{margin-bottom:12px;font-size:16px}
+.import-modal-body p{font-size:13px;color:#666;line-height:1.6;margin-bottom:16px}
+.import-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.table-section{background:#fff;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
+th{background:#fafafa;padding:10px 12px;text-align:left;color:#666;font-weight:600;border-bottom:1px solid #f0f0f0}
+td{padding:10px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+tr.data-row:hover{background:#fafafa}
+.badge{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.badge-listed{background:#f6ffed;color:#52c41a}.badge-delisted{background:#fff1f0;color:#ff4d4f}
+.badge-paused{background:#f9f0ff;color:#722ed1}
+.badge-mmf{background:#e6f7ff;color:#096dd9}
+.product-code{font-size:12px;color:#999;margin-top:2px;font-family:monospace}
+.pagination{padding:12px 20px;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;border-top:1px solid #f0f0f0;font-size:13px;color:#666}
+.pagination-info{margin-right:auto}
+.page-btn{padding:4px 10px;border:1px solid #d9d9d9;background:#fff;border-radius:4px;cursor:pointer;font-size:13px}
+.page-btn.active{background:#1890ff;color:#fff;border-color:#1890ff}
+.page-btn:disabled{color:#bbb;cursor:not-allowed;background:#f5f5f5}
+.page-btn.ellipsis{border:none;background:none;min-width:24px;cursor:default}
+.page-size-select{padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px}
+.page-jump{display:flex;align-items:center;gap:6px}
+.page-jump input{width:48px;padding:4px 6px;border:1px solid #d9d9d9;border-radius:4px;text-align:center}
+.empty-state{text-align:center;padding:40px;color:#999}
+/* Detail */
+.fund-header h1{font-size:18px;font-weight:600;flex:1;line-height:1.4;min-width:200px}
+.fund-title-block{flex:1;min-width:200px}
+.fund-website-link{display:inline-block;font-size:13px;color:#1890ff;text-decoration:none;word-break:break-all}
+.fund-website-link:hover{text-decoration:underline}
+.fund-website-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;width:100%}
+.fund-website-label{font-size:12px;color:#666;white-space:nowrap}
+.fund-website-input{flex:1;min-width:220px;max-width:520px;padding:6px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;background:#fff}
+.fund-website-input:focus{border-color:#1890ff;outline:none;box-shadow:0 0 0 2px rgba(24,144,255,.12)}
+.fund-website-edit{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.fund-website-view{display:none;align-items:center;gap:6px;flex-wrap:wrap}
+.view-mode .fund-website-edit{display:none!important}
+.view-mode .fund-website-view{display:flex}
+.scrape-time{display:block;margin-top:4px;font-size:12px;color:#999}
+.section-status{font-size:14px;margin-left:8px;font-weight:400}
+.panel-title-with-actions{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;font-size:15px;font-weight:600;border-bottom:1px solid #f0f0f0}
+.doc-lang-tabs{display:flex;gap:0;padding:0 20px;border-bottom:1px solid #f0f0f0;background:#fafafa}
+.doc-lang-tab{padding:10px 16px;border:none;background:none;font-size:13px;color:#666;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.doc-lang-tab.active{color:#1890ff;border-bottom-color:#1890ff;font-weight:600}
+.doc-cat-block{padding:12px 20px;border-bottom:1px solid #f5f5f5}
+.doc-cat-title{font-size:13px;font-weight:600;color:#333;margin-bottom:8px}
+.perf-toolbar{padding:8px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.perf-toolbar .btn-sm{margin:0}
+.month-search-row{padding:8px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.month-search-row input,.month-search-row select{padding:6px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px}
+.nav-toolbar{padding:8px 20px;display:flex;gap:8px}
+.field-row .fvalue input[type=date]{max-width:200px}
+.fund-header{background:#fafafa;border:1px solid #e8e8e8;border-radius:8px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.header-meta{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.featured-toggle,.status-toggle{display:flex;align-items:center;gap:8px;white-space:nowrap;background:#fff;border:1px solid #e8e8e8;border-radius:6px;padding:8px 14px;font-size:13px}
+.switch{width:44px;height:22px;background:#d9d9d9;border-radius:11px;position:relative;cursor:pointer;transition:background .2s}
+.switch.on{background:#52c41a}
+.switch::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch.on::after{left:24px}
+.detail-tabs{background:#fff;border:1px solid #e8e8e8;border-radius:8px 8px 0 0;display:flex;overflow-x:auto;border-bottom:none}
+.detail-tab{flex:1;min-width:max-content;padding:14px 20px;border:none;background:none;font-size:14px;color:#666;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.detail-tab:hover{color:#1890ff}.detail-tab.active{color:#1890ff;border-bottom-color:#1890ff;font-weight:600}
+.tab-panels{background:#fff;border:1px solid #e8e8e8;border-radius:0 0 8px 8px;margin-bottom:20px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.panel-section{border-bottom:1px solid #f0f0f0}.panel-section:last-child{border-bottom:none}
+.panel-title{padding:14px 20px;font-size:15px;font-weight:600;border-bottom:1px solid #f0f0f0}
+.dash{color:#bbb}
+.info-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.info-table th,.info-table td{border:1px solid #e8e8e8;padding:10px 12px;text-align:left;font-size:13px}
+.info-table th{width:11%;background:#fafafa;color:#666;font-weight:500}
+.info-table td{background:#f5f5f5;color:#666}
+.sync-note{padding:10px 20px 14px;font-size:12px;color:#999;background:#fafafa;border-top:1px solid #f0f0f0}
+.scrape-hint{padding:8px 20px 12px;font-size:12px;color:#999;background:#fff;border-bottom:1px solid #f0f0f0;margin:0}
+/* 行铺满表格 */
+.field-rows{border-top:1px solid #f0f0f0}
+.field-row{display:flex;border-bottom:1px solid #f0f0f0;min-height:46px;align-items:stretch}
+.field-row .flabel{width:220px;flex-shrink:0;padding:12px 20px;color:#666;background:#fafafa;border-right:1px solid #f0f0f0;display:flex;align-items:center;gap:4px}
+.field-row .flabel .req{color:#ff4d4f}
+.field-row .fvalue{flex:1;padding:8px 20px;display:flex;align-items:center;background:#fff}
+.field-row .fvalue input,.field-row .fvalue textarea,.field-row .fvalue select{width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;font-family:inherit}
+.field-row .fvalue textarea{min-height:72px;resize:vertical}
+.field-row.readonly .fvalue{background:#f5f5f5;color:#666}
+.field-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 16px;padding:16px 20px;border-top:1px solid #f0f0f0}
+@media(max-width:1100px){.field-grid{grid-template-columns:repeat(2,1fr)}.field-cell.span-2,.field-cell.span-3,.field-cell.span-4{grid-column:span 2}}
+@media(max-width:700px){.field-grid{grid-template-columns:1fr}.field-cell.span-2,.field-cell.span-3,.field-cell.span-4{grid-column:span 1}}
+.field-cell{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field-cell .flabel{font-size:12px;color:#666;display:flex;align-items:center;gap:4px}
+.field-cell .flabel .req{color:#ff4d4f}
+.field-cell .fvalue{width:100%}
+.field-cell .fvalue input,.field-cell .fvalue textarea,.field-cell .fvalue select{width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;font-family:inherit;background:#fff}
+.field-cell .fvalue textarea{min-height:72px;resize:vertical}
+.field-cell.span-2{grid-column:span 2}
+.field-cell.span-3{grid-column:span 3}
+.field-cell.span-4{grid-column:span 4}
+.field-cell .fvalue.inline-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.field-cell .fvalue.inline-actions select{flex:1;min-width:100px}
+.field-cell .fvalue.inline-actions input{flex:1;min-width:80px}
+.fiscal-md{display:flex;align-items:center;gap:6px}
+.fiscal-md select{width:auto;min-width:72px}
+.file-row.dragging{opacity:.45}
+.doc-cat-block.drag-over{outline:2px dashed #1890ff;background:#e6f7ff}
+.nav-add-box{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 20px;background:#fafafa;border-bottom:1px solid #f0f0f0}
+.nav-add-box input{padding:6px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px}
+.nav-table tr.selected{background:#e6f7ff}
+.perf-table th input{width:100%;padding:4px 6px;border:1px solid #d9d9d9;border-radius:4px;font-size:12px;font-weight:600;text-align:center;background:#fff}
+.tab-status{font-size:15px;margin-left:6px;cursor:pointer;padding:0 2px;line-height:1;vertical-align:middle;filter:none}
+.tab-status:hover{opacity:.85}
+.tab-status:empty{display:none}
+.badge-yes{background:#f6ffed;color:#52c41a}.badge-no{background:#f5f5f5;color:#999}
+.section-subtitle{padding:12px 20px;font-size:14px;font-weight:600;color:#333;background:#fff;border-bottom:1px solid #f0f0f0}
+/* 基金公司折叠 */
+.collapse-wrap{margin:16px 20px}
+.collapse-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fafafa;border:1px solid #e8e8e8;border-radius:8px;cursor:pointer;user-select:none}
+.collapse-hd strong{font-size:14px}
+.collapse-hd .icon{color:#999;font-size:12px;transition:transform .2s}
+.collapse-hd.open .icon{transform:rotate(90deg)}
+.collapse-bd{display:none;border:1px solid #e8e8e8;border-top:none;border-radius:0 0 8px 8px;overflow:hidden}
+.collapse-bd.open{display:block}
+.collapse-bd .collapse-hd{border-radius:0;border:none;border-bottom:1px solid #e8e8e8}
+.publisher-search{padding:12px 20px;border-bottom:1px solid #f0f0f0;background:#fff}
+.publisher-search input{width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px}
+.publisher-pick{max-height:140px;overflow-y:auto;border-bottom:1px solid #f0f0f0}
+.publisher-opt{padding:10px 20px;cursor:pointer;font-size:13px;border-bottom:1px solid #f5f5f5}
+.publisher-opt:hover,.publisher-opt.selected{background:#e6f4ff}
+.publisher-empty{padding:16px 20px;color:#999;font-size:13px}
+.strategy-area{padding:16px 20px}
+.strategy-textarea{width:100%;min-height:88px;padding:10px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical}
+.edit-hint{font-size:12px;color:#999;padding:0 20px 12px}
+.tag-editor{padding:16px 20px}
+.tag-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;min-height:32px}
+.tag-item{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:13px;background:#e6f4ff;color:#0958d9;border:1px solid #91caff}
+.tag-remove{cursor:pointer;color:#ff4d4f;font-weight:700}
+.tag-input-row{display:flex;gap:8px}
+.tag-input{flex:1;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px}
+.btn-sm{padding:6px 12px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:13px}
+.btn-sm-primary{background:#1890ff;color:#fff;border-color:#1890ff}
+.perf-wrap{padding:16px 20px}
+.perf-title{background:#f0f0f0;padding:10px 16px;font-weight:600;border:1px solid #d9d9d9;border-bottom:none}
+.perf-table{width:100%;border-collapse:collapse}
+.perf-table th,.perf-table td{border:1px solid #d9d9d9;padding:10px;text-align:center;font-size:14px}
+.perf-table th{background:#fafafa}
+.perf-table input{width:72px;padding:4px 6px;border:1px solid #d9d9d9;border-radius:2px;text-align:center;font-size:13px}
+.perf-foot{padding:10px 16px;font-size:13px;color:#666;border:1px solid #d9d9d9;border-top:none}
+.perf-empty{padding:16px 20px;color:#bbb}
+.group-label{padding:10px 20px;font-size:13px;font-weight:600;color:#666;background:#fafafa;border-bottom:1px solid #f0f0f0;border-top:1px solid #f0f0f0}
+.nav-filter{padding:16px 20px;display:flex;gap:20px;border-bottom:1px solid #f0f0f0}
+.nav-filter input{padding:6px 10px;border:1px solid #d9d9d9;border-radius:2px;background:#f5f5f5;font-size:13px}
+.nav-table{width:100%;border-collapse:collapse}
+.nav-table thead th{background:#f5f5f5;padding:12px 20px;text-align:left;font-weight:600;border:1px solid #d9d9d9}
+.nav-table tbody td{padding:10px 20px;border-bottom:1px solid #eee}
+.file-row{display:flex;align-items:center;padding:12px 20px;border-bottom:1px solid #f5f5f5;font-size:13px}
+.file-idx{width:32px;color:#666}.file-action{color:#fa8c16;margin-left:12px;text-decoration:none}
+.save-footer{position:fixed;bottom:0;left:220px;right:0;background:#fff;border-top:1px solid #e8e8e8;padding:14px 24px;display:none;justify-content:flex-end;gap:10px;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
+.save-footer.show{display:flex}
+.toast{position:fixed;top:20px;right:20px;background:#fff;padding:12px 20px;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.15);display:none;z-index:999;border-left:4px solid #52c41a}
+.toast.show{display:block}
+/* 基金公司行内展开 */
+.fund-house-cell{display:flex;gap:8px;align-items:center;width:100%}
+.fund-house-cell select{flex:1}
+.btn-expand{padding:6px 12px;border:1px solid #d9d9d9;border-radius:4px;background:#fafafa;cursor:pointer;font-size:12px;white-space:nowrap;color:#666}
+.btn-expand:hover{border-color:#1890ff;color:#1890ff}
+.publisher-panel{border-top:1px solid #f0f0f0;background:#fafafa}
+.publisher-panel .field-row .flabel{background:#f5f5f5}
+.nav-table input.nav-val{width:120px;padding:6px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px}
+.nav-filter select{padding:6px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-width:120px}
+.file-upload-row{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid #f5f5f5}
+.file-upload-row input[type=file]{font-size:12px}
+.view-mode .field-row .fvalue input,
+.view-mode .field-row .fvalue textarea,
+.view-mode .field-row .fvalue select,
+.view-mode .field-cell .fvalue input,
+.view-mode .field-cell .fvalue textarea,
+.view-mode .field-cell .fvalue select,
+.view-mode .perf-table input,
+.view-mode .nav-table input,
+.view-mode .strategy-textarea,
+.view-mode .tag-input-row,
+.view-mode .status-select,
+.view-mode .featured-toggle .switch,
+.view-mode .file-upload-row,
+.view-mode .fund-website-input{pointer-events:none}
+.view-mode .tag-remove{display:none}
+.view-mode .perf-toolbar,.view-mode .nav-toolbar,.view-mode .month-search-row,.view-mode .fund-house-cell input,.view-mode .fund-house-cell .btn-sm,.view-mode .field-cell .inline-actions .btn-sm{display:none!important}
+</style>
+</head>
+<body>
+<div class="container">
+  <aside class="sidebar">
+    <div class="logo"><span class="logo-dot"></span>金马证券业务中台</div>
+    <div class="nav-menu">
+      <div class="nav-item">🏠 首页</div>
+      <div class="nav-sub">
+        <div class="nav-item nav-parent">📦 产品中心 ›</div>
+        <div class="nav-sub">
+          <div class="nav-item muted">📊 基金旧 ›</div>
+          <div class="nav-item">🆕 基金新 ›</div>
+          <div class="nav-sub"><div class="nav-item active" onclick="Router.go('/list')">产品库</div></div>
+          <div class="nav-item muted">📈 债券 ›</div>
+          <div class="nav-item">🏛️ 发行商管理 ›</div>
+          <div class="nav-sub"><div class="nav-item" onclick="location.href='Issuer_Fund_House_List.html'">基金</div></div>
+        </div>
+      </div>
+      <div class="nav-sub" style="margin-top:8px">
+        <div class="nav-item nav-parent">⚙️ 平台设置 ›</div>
+        <div class="nav-sub">
+          <div class="nav-item">运营配置 ›</div>
+          <div class="nav-sub"><div class="nav-item" onclick="location.href='Ops_Banner_Config.html'">活动配置</div></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="main-content">
+    <header class="header">
+      <div class="breadcrumb" id="breadcrumb">产品中心 / <strong>基金新</strong> / 产品库</div>
+      <div class="header-actions" id="headerActions"><span>管理员</span></div>
+    </header>
+
+    <!-- 列表 -->
+    <div class="content view active" id="view-list">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">已上架</div><div class="stat-value" id="statListed">0</div></div>
+        <div class="stat-card delisted"><div class="stat-label">已下架</div><div class="stat-value" id="statDelisted">0</div></div>
+        <div class="stat-card paused"><div class="stat-label">暂停</div><div class="stat-value" id="statPaused">0</div></div>
+      </div>
+      <div class="filter-box">
+        <input type="text" class="search-input" id="searchInput" placeholder="搜索产品名称、产品代码、基金公司">
+        <div class="filter-row">
+          <div class="filter-item"><label>状态</label>
+            <select class="filter-select" id="filterStatus">
+              <option value="">全部</option><option value="LISTED">已上架</option>
+              <option value="DELISTED">已下架</option><option value="PAUSED">暂停</option>
+            </select>
+          </div>
+          <div class="filter-item"><label>投资者限制</label>
+            <select class="filter-select" id="filterInvestor">
+              <option value="">全部</option><option value="PI_ONLY">仅PI</option><option value="ALL">全部</option>
+            </select>
+          </div>
+          <div class="filter-item"><label>基金类别</label>
+            <select class="filter-select" id="filterCategory"><option value="">全部</option><option value="MMF" selected>货币型基金</option></select>
+          </div>
+          <div class="filter-item"><label>基金风险等级</label>
+            <select class="filter-select" id="filterRisk">
+              <option value="">全部</option><option value="1">低风险</option><option value="2">中低风险</option>
+              <option value="3">中等风险</option><option value="4">中高风险</option><option value="5">高风险</option>
+            </select>
+          </div>
+          <div class="filter-item"><label>是否精选</label>
+            <select class="filter-select" id="filterFeatured">
+              <option value="">全部</option><option value="yes">是</option><option value="no">否</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="applyFilters()">查看</button>
+          <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+        </div>
+      </div>
+      <div class="table-section">
+        <div class="table-toolbar">
+          <button class="btn btn-secondary" onclick="openImportModal()">导入</button>
+          <button class="btn btn-secondary" onclick="location.href='Ops_Banner_Config.html'">Banner 配置</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>产品名称</th><th>基金公司</th><th>基金风险等级</th><th>基金类别</th>
+              <th>份额类别</th><th>货币</th><th>投资者限制</th><th>是否精选</th><th>状态</th><th>操作</th>
+            </tr></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="paginationBar"></div>
+      </div>
+    </div>
+
+    <!-- 详情/编辑 -->
+    <div class="content view view-detail" id="view-detail">
+      <div class="fund-header">
+        <div class="fund-title-block">
+          <h1 id="fundTitle">—</h1>
+          <div class="fund-website-row">
+            <div class="fund-website-edit" id="fundWebsiteEditWrap">
+              <span class="fund-website-label">基金官网 URL</span>
+              <input type="url" class="fund-website-input" id="fld_website_url" placeholder="请输入基金官网 URL，如 https://">
+            </div>
+            <div class="fund-website-view" id="fundWebsiteViewWrap">
+              <span class="fund-website-label">基金官网</span>
+              <a class="fund-website-link" id="fundWebsite" href="#" target="_blank" rel="noopener"></a>
+            </div>
+          </div>
+          <span class="scrape-time" id="scrapeTimeDisplay"></span>
+        </div>
+        <div class="header-meta">
+          <div class="status-toggle">
+            <span>状态</span>
+            <select class="status-select" id="productStatus">
+              <option value="LISTED">已上架</option><option value="DELISTED">已下架</option>
+              <option value="PAUSED">暂停</option>
+            </select>
+          </div>
+          <div class="featured-toggle">
+            <span>是否精选</span>
+            <div class="switch" id="featuredSwitch" onclick="toggleFeatured()"></div>
+          </div>
+        </div>
+      </div>
+      <nav class="detail-tabs">
+        <button type="button" class="detail-tab active" data-tab="basic">基本信息 <span class="tab-status" id="tabStatusBasic"></span></button>
+        <button type="button" class="detail-tab" data-tab="perf">表现与净值 <span class="tab-status" id="tabStatusPerf"></span></button>
+        <button type="button" class="detail-tab" data-tab="subscribe">申购细节 <span class="tab-status" id="tabStatusSubscribe"></span></button>
+        <button type="button" class="detail-tab" data-tab="brochure">产品册子 <span class="tab-status" id="tabStatusBrochure"></span></button>
+      </nav>
+      <div class="tab-panels">
+        <div class="tab-panel active" id="tab-basic">
+          <div class="panel-section">
+            <div class="panel-title">产品信息</div>
+            <table class="info-table" id="ayersInfoTable"></table>
+            <div class="sync-note">Ayers product data sync · Default status when synced: Delisted</div>
+            <div class="field-grid" id="basicFieldsRows"></div>
+          </div>
+          <div class="panel-section">
+            <div class="panel-title">基金目标</div>
+            <div class="strategy-area"><textarea class="strategy-textarea" id="fundObjective" placeholder="基金投资目标描述"></textarea></div>
+          </div>
+          <div class="panel-section">
+            <div class="panel-title">投资策略</div>
+            <div class="strategy-area"><textarea class="strategy-textarea" id="fundStrategy" placeholder="官网抓取；抓取不到可人工录入，可为空"></textarea></div>
+          </div>
+          <div class="panel-section">
+            <div class="panel-title">产品标签</div>
+            <div class="tag-editor">
+              <div class="tag-list" id="tagList"></div>
+              <div class="tag-input-row">
+                <input class="tag-input" id="tagInput" placeholder="输入标签后回车或点击添加">
+                <button type="button" class="btn-sm btn-sm-primary" onclick="addTag()">添加</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-panel" id="tab-perf">
+          <div class="panel-section">
+            <div class="panel-title">基金表现</div>
+            <div class="perf-wrap">
+              <div class="panel-title-with-actions">
+                <span class="perf-title" id="perfCumTitle" style="border:none;padding:0;margin:0">累积表现(%)</span>
+                <div class="perf-toolbar">
+                  <button type="button" class="btn-sm" onclick="addCumColumn()">+ 列</button>
+                  <button type="button" class="btn-sm" onclick="removeCumColumn()">− 列</button>
+                </div>
+              </div>
+              <table class="perf-table" id="perfCumTable"><thead><tr id="perfCumHead"></tr></thead>
+              <tbody><tr id="perfCumBody"></tr></tbody></table>
+            </div>
+            <div class="perf-wrap" style="padding-top:0">
+              <div class="panel-title-with-actions">
+                <span id="perfAnnualTitle">年度表现(%)</span>
+                <div class="perf-toolbar">
+                  <button type="button" class="btn-sm" onclick="addAnnualYear()">+ 年份</button>
+                  <button type="button" class="btn-sm" onclick="removeAnnualYear()">− 年份</button>
+                </div>
+              </div>
+              <table class="perf-table" id="perfAnnualTable"><thead><tr id="perfAnnualHead"></tr></thead>
+              <tbody><tr id="perfAnnualBody"></tr></tbody></table>
+            </div>
+            <div class="perf-foot" id="perfAnnualFoot"></div>
+            <div class="perf-wrap" style="padding-top:0">
+              <div class="panel-title-with-actions">
+                <span id="perfMonthlyTitle">月度表现(%)</span>
+                <div class="month-search-row">
+                  <label>年份 <input type="number" id="monthYearSearch" min="2000" max="2099" style="width:90px" placeholder="如 2025"></label>
+                  <button type="button" class="btn-sm btn-sm-primary" onclick="loadMonthlyByYear()">查询</button>
+                  <button type="button" class="btn-sm" onclick="resetMonthlyThisYear()">今年</button>
+                </div>
+              </div>
+              <table class="perf-table" id="perfMonthlyTable"><thead><tr id="perfMonthlyHead"></tr></thead>
+              <tbody><tr id="perfMonthlyBody"></tr></tbody></table>
+            </div>
+          </div>
+          <div class="panel-section">
+            <div class="panel-title">基金净值</div>
+            <div class="nav-add-box" id="navAddBox">
+              <label>日期 <input type="date" id="navAddDate"></label>
+              <label>净值 <input type="text" id="navAddValue" placeholder="如 121.6606" style="width:120px"></label>
+              <button type="button" class="btn-sm btn-sm-primary" onclick="addNavRow()">添加</button>
+              <button type="button" class="btn-sm" onclick="removeSelectedNavRow()">删除选中行</button>
+            </div>
+            <div class="nav-filter">
+              <label>从 <select id="navFrom" onchange="filterNavRows()"></select></label>
+              <label>到 <select id="navTo" onchange="filterNavRows()"></select></label>
+            </div>
+            <table class="nav-table">
+              <thead><tr><th style="width:36px"></th><th>日期</th><th id="navColHead">基金净值</th></tr></thead>
+              <tbody id="navBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="tab-panel" id="tab-subscribe">
+          <div class="panel-section">
+            <div class="panel-title">申购细节</div>
+            <div class="field-grid" id="subscribeRows"></div>
+          </div>
+        </div>
+        <div class="tab-panel" id="tab-brochure">
+          <div class="panel-section">
+            <div class="panel-title">基金文件</div>
+            <div id="brochureDocRoot"></div>
+            <div class="panel-title" style="border-top:1px solid #f0f0f0;margin-top:8px">备注</div>
+            <div class="strategy-area"><textarea class="strategy-textarea" id="internalRemarks" placeholder="内部备注（可为空）"></textarea></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="save-footer" id="saveFooter">
+      <button class="btn" onclick="Router.go('/list')">取消</button>
+      <button class="btn btn-success" onclick="saveProduct()">保存</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="import-modal" id="importModal" onclick="if(event.target===this)closeImportModal()">
+  <div class="import-modal-body">
+    <h3>批量导入产品</h3>
+    <p>支持上传表格文件（CSV / Excel），按模板批量填充产品字段。<br><strong>导入模板待补充</strong>，当前可先选择文件进行原型验证。</p>
+    <input type="file" id="importFileInput" accept=".csv,.xlsx,.xls" style="font-size:13px">
+    <div class="import-modal-actions">
+      <button class="btn" onclick="closeImportModal()">取消</button>
+      <button class="btn btn-primary" onclick="handleImportFile()">开始导入</button>
+    </div>
+  </div>
+</div>
+
+<script src="data/mof_sidebar.js?v=20260709d"></script>
+<script src="data/mmf_products.js?v=20260709e"></script>
+<script src="data/pingan_pammf.js?v=20260708f"></script>
+<script src="data/fund_house_publishers.js?v=20260708f"></script>
+<script src="data/mof_common.js?v=20260708f"></script>
+<script>
+function lblRisk(level) {
+  return typeof riskLabel === 'function' ? riskLabel(level) : (level ?? '—');
+}
+function lblInvestor(code) {
+  if (typeof investorRestrictionLabel === 'function') return investorRestrictionLabel(code);
+  if (code === 'PI_ONLY') return '仅PI';
+  if (code === 'ALL') return '全部';
+  return code || '—';
+}
+function lblStatus(status) {
+  const m = (typeof STATUS_MAP !== 'undefined' ? STATUS_MAP : {})[status];
+  return m || { label: status || '—', cls: '' };
+}
+const NAV_ROWS = [
+  {d:'30/06/2026',v:'121.6366'},{d:'29/06/2026',v:'121.6225'},{d:'26/06/2026',v:'121.5860'},
+  {d:'25/06/2026',v:'121.5729'},{d:'24/06/2026',v:'121.5604'},{d:'23/06/2026',v:'121.5489'},
+  {d:'22/06/2026',v:'121.5324'},{d:'18/06/2026',v:'121.4862'},{d:'17/06/2026',v:'121.4738'},
+  {d:'16/06/2026',v:'121.4603'}
+];
+const ANNUAL_YEARS = [2020, 2021, 2022, 2023, 2024, 2025];
+const MONTHLY_KEYS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+let pageState = { current: 1, pageSize: 10 };
+
+let filtered = typeof MMF_PRODUCTS !== 'undefined' ? [...MMF_PRODUCTS] : [];
+let fund = null;
+let tags = [];
+let featured = false;
+let selectedPublisher = null;
+let publisherOpen = false;
+let detailTabsInited = false;
+let isReadOnly = false;
+
+const Router = {
+  init() {
+    window.addEventListener('hashchange', () => this.resolve());
+    if (!location.hash || location.hash === '#') location.hash = '#/list';
+    this.resolve();
+  },
+  go(path) {
+    location.hash = '#' + (path.startsWith('/') ? path : '/' + path);
+  },
+  parse() {
+    const parts = (location.hash.slice(1) || '/list').replace(/^\//,'').split('/').filter(Boolean);
+    if (!parts.length || parts[0] === 'list') return { view: 'list' };
+    if ((parts[0] === 'detail' || parts[0] === 'view') && parts[1]) {
+      return { view: 'detail', code: decodeURIComponent(parts[1]), readOnly: parts[0] === 'view' };
+    }
+    return { view: 'list' };
+  },
+  resolve() {
+    const r = this.parse();
+    isReadOnly = !!r.readOnly;
+    document.getElementById('view-list').classList.toggle('active', r.view === 'list');
+    document.getElementById('view-detail').classList.toggle('active', r.view === 'detail');
+    document.getElementById('view-detail').classList.toggle('view-mode', r.view === 'detail' && isReadOnly);
+    document.getElementById('saveFooter').classList.toggle('show', r.view === 'detail' && !isReadOnly);
+    if (r.view === 'list') {
+      document.getElementById('breadcrumb').innerHTML = '产品中心 / <strong>基金新</strong> / 产品库';
+      document.getElementById('headerActions').innerHTML = '<span>管理员</span>';
+      try { updateStats(); renderTable(filtered); } catch (e) { console.error(e); }
+    } else {
+      const modeLabel = isReadOnly ? '查看产品' : '编辑产品';
+      document.getElementById('breadcrumb').innerHTML = `产品中心 / 基金新 / 产品库 / <strong>${modeLabel}</strong>`;
+      document.getElementById('headerActions').innerHTML = isReadOnly
+        ? `<button class="btn" onclick="Router.go('/list')">返回列表</button>
+           <button class="btn btn-primary" onclick="openEdit('${r.code}')">编辑</button>`
+        : `<button class="btn btn-scrape" onclick="scrapePublicData()">抓取网站公共数据</button>
+           <span class="scrape-time" id="headerScrapeTime" style="margin-right:8px"></span>
+           <button class="btn" onclick="Router.go('/list')">返回列表</button>`;
+      try { loadDetail(r.code); } catch (e) { console.error(e); showToast('详情加载失败：' + e.message); }
+    }
+  }
+};
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function categoryLabel(cat) {
+  if (typeof fundCategoryTypeLabel === 'function') return fundCategoryTypeLabel(cat);
+  return cat === 'MMF' ? '货币基金' : (cat || '—');
+}
+
+function updateStats() {
+  const elListed = document.getElementById('statListed');
+  const elDelisted = document.getElementById('statDelisted');
+  const elPaused = document.getElementById('statPaused');
+  if (!elListed || !elDelisted || !elPaused || typeof MMF_PRODUCTS === 'undefined') return;
+  elListed.textContent = MMF_PRODUCTS.filter(p => p.product_status === 'LISTED').length;
+  elDelisted.textContent = MMF_PRODUCTS.filter(p => p.product_status === 'DELISTED').length;
+  elPaused.textContent = MMF_PRODUCTS.filter(p => p.product_status === 'PAUSED').length;
+}
+
+function statusActionBtns(code, status) {
+  const c = code.replace(/'/g, "\\'");
+  if (status === 'LISTED') {
+    return `<button class="btn-link btn-link-warn" onclick="setProductStatus('${c}','DELISTED')">下架</button>
+            <button class="btn-link" onclick="setProductStatus('${c}','PAUSED')">暂停</button>`;
+  }
+  if (status === 'DELISTED') {
+    return `<button class="btn-link" onclick="setProductStatus('${c}','LISTED')">上架</button>
+            <button class="btn-link" onclick="setProductStatus('${c}','PAUSED')">暂停</button>`;
+  }
+  if (status === 'PAUSED') {
+    return `<button class="btn-link" onclick="setProductStatus('${c}','LISTED')">上架</button>
+            <button class="btn-link btn-link-warn" onclick="setProductStatus('${c}','DELISTED')">下架</button>`;
+  }
+  return '';
+}
+
+function setProductStatus(code, status) {
+  const p = MMF_PRODUCTS.find(x => x.product_code === code);
+  if (!p) return;
+  p.product_status = status;
+  p.updated_at = new Date().toISOString().slice(0, 10);
+  updateStats();
+  applyFilters();
+  showToast('状态已更新为「' + (STATUS_MAP[status]?.label || status) + '」');
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('tableBody');
+  const total = data.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageState.pageSize));
+  if (pageState.current > totalPages) pageState.current = totalPages;
+  const start = (pageState.current - 1) * pageState.pageSize;
+  const pageData = data.slice(start, start + pageState.pageSize);
+  document.getElementById('paginationBar').innerHTML = typeof mofPaginationHtml === 'function'
+    ? mofPaginationHtml(total, pageState.current, pageState.pageSize, totalPages) : '';
+  if (!pageData.length) { tbody.innerHTML = '<tr><td colspan="10" class="empty-state">暂无数据</td></tr>'; return; }
+  tbody.innerHTML = pageData.map(p => {
+    const st = lblStatus(p.product_status);
+    const feat = !!p.is_featured;
+    return `<tr class="data-row">
+      <td><div>${p.product_name}</div><div class="product-code">${p.product_code}</div></td>
+      <td>${p.fund_house_name}</td><td>${lblRisk(p.fund_inv_risk_level)}</td>
+      <td><span class="badge badge-mmf">${categoryLabel(p.fund_category_type || p.fund_category)}</span></td>
+      <td>${p.share_class_label || '—'}</td><td>${p.base_ccy}</td>
+      <td>${lblInvestor(p.investor_restriction)}</td>
+      <td><span class="badge ${feat ? 'badge-yes' : 'badge-no'}">${feat ? '是' : '否'}</span></td>
+      <td><span class="badge ${st.cls}">${st.label}</span></td>
+      <td>
+        <button class="btn-link" onclick="openView('${p.product_code}')">查看</button>
+        <button class="btn-link" onclick="openEdit('${p.product_code}')">编辑</button>
+        ${statusActionBtns(p.product_code, p.product_status)}
+      </td></tr>`;
+  }).join('');
+}
+
+function goPage(p) {
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageState.pageSize));
+  if (p < 1 || p > totalPages) return;
+  pageState.current = p;
+  renderTable(filtered);
+}
+
+function changePageSize(size) {
+  pageState.pageSize = parseInt(size, 10) || 10;
+  pageState.current = 1;
+  renderTable(filtered);
+}
+
+function jumpToPage() {
+  const p = parseInt(document.getElementById('jumpPageInput')?.value, 10);
+  if (p) goPage(p);
+}
+
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('filterStatus').value;
+  const investor = document.getElementById('filterInvestor').value;
+  const cat = document.getElementById('filterCategory').value;
+  const risk = document.getElementById('filterRisk').value;
+  const featured = document.getElementById('filterFeatured')?.value || '';
+  filtered = MMF_PRODUCTS.filter(p => {
+    const hay = [p.product_name, p.product_code, p.fund_house_name, p.fund_internal_code].join(' ').toLowerCase();
+    if (q && !hay.includes(q)) return false;
+    if (status && p.product_status !== status) return false;
+    if (investor && p.investor_restriction !== investor) return false;
+    if (cat && (p.fund_category_type || p.fund_category) !== cat) return false;
+    if (risk && String(p.fund_inv_risk_level) !== risk) return false;
+    if (featured === 'yes' && !p.is_featured) return false;
+    if (featured === 'no' && p.is_featured) return false;
+    return true;
+  });
+  pageState.current = 1;
+  renderTable(filtered);
+}
+
+function resetFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('filterStatus').value = '';
+  document.getElementById('filterInvestor').value = '';
+  document.getElementById('filterCategory').value = 'MMF';
+  document.getElementById('filterRisk').value = '';
+  const ff = document.getElementById('filterFeatured');
+  if (ff) ff.value = '';
+  filtered = [...MMF_PRODUCTS];
+  pageState.current = 1;
+  renderTable(filtered);
+}
+
+function openView(code) { Router.go('/view/' + encodeURIComponent(code)); }
+function openEdit(code) { Router.go('/detail/' + encodeURIComponent(code)); }
+
+function dash(v) { return (v == null || v === '' || v === '—') ? '<span class="dash">—</span>' : v; }
+
+let navData = [];
+let fundDocuments = typeof emptyFundDocuments === 'function' ? emptyFundDocuments() : {};
+let docLang = {};
+let annualYearsDynamic = [];
+let monthlyKeysDynamic = [];
+let cumColumns = [
+  { key: 'm1', label: '1月' }, { key: 'm3', label: '3月' }, { key: 'm6', label: '6月' },
+  { key: 'ytd', label: 'YTD' }, { key: 'y1', label: '1年' }, { key: 'y3', label: '3年' }
+];
+let selectedNavDates = new Set();
+let dragDoc = null;
+
+const REQUIRED_BASIC_IDS = ['fld_risk_level', 'fld_launch_date', 'fld_fund_size', 'fld_fund_house_select'];
+const REQUIRED_SUB_IDS = ['sub_min', 'sub_inc', 'sub_fee', 'sub_confirm', 'sub_open', 'sub_lock', 'sub_red_fee', 'sub_red_min', 'sub_red_open', 'sub_red_notice', 'sub_mgmt_fee'];
+
+function getCustomCategories() {
+  try { return JSON.parse(localStorage.getItem('mof_fund_category_custom') || '[]'); } catch { return []; }
+}
+function saveCustomCategories(list) {
+  localStorage.setItem('mof_fund_category_custom', JSON.stringify(list));
+}
+function saveCustomCategory(name) {
+  const n = (name || '').trim();
+  if (!n) return;
+  const list = getCustomCategories();
+  if (!list.includes(n)) { list.push(n); saveCustomCategories(list); }
+}
+function renameCustomCategory(oldName, newName) {
+  const list = getCustomCategories();
+  const idx = list.indexOf(oldName);
+  if (idx >= 0) { list[idx] = newName; saveCustomCategories(list); }
+}
+
+function fieldCell(id, label, val, opts = {}) {
+  const req = opts.required ? '<span class="req">*</span>' : '';
+  const span = opts.span ? ` span-${opts.span}` : '';
+  const ro = opts.readonly || (isReadOnly && !opts.editable);
+  if (ro && !opts.forceEdit) {
+    const display = opts.selectLabel || (val ?? '—');
+    return `<div class="field-cell${span}"><div class="flabel">${req}${label}</div><div class="fvalue"><div style="padding:8px 0;color:#666">${display}</div></div></div>`;
+  }
+  let input = '';
+  if (opts.html) {
+    input = opts.html;
+  } else if (opts.select) {
+    input = `<select id="${id}">${opts.select}</select>`;
+  } else if (opts.textarea) {
+    input = `<textarea id="${id}">${val ?? ''}</textarea>`;
+  } else if (opts.type === 'date') {
+    input = `<input type="date" id="${id}" value="${val ?? ''}">`;
+  } else {
+    const ph = opts.placeholder ? ` placeholder="${opts.placeholder}"` : '';
+    input = `<input id="${id}" value="${(val ?? '').toString().replace(/"/g,'&quot;')}"${ph}>`;
+  }
+  const wrapCls = opts.inline ? 'fvalue inline-actions' : 'fvalue';
+  return `<div class="field-cell${span}"><div class="flabel">${req}${label}</div><div class="${wrapCls}">${input}</div></div>`;
+}
+
+function renderAyersTable(f) {
+  const rows = [
+    ['Exchange Code', f.exchange_code || '—'],
+    ['Product Code', f.product_code],
+    ['ISIN', f.default_isin || f.product_code],
+    ['Name', f.product_name],
+    ['Currency', f.base_ccy],
+    ['Price Spread Code', f.price_spread_code || '—']
+  ];
+  let html = '';
+  for (let i = 0; i < rows.length; i += 3) {
+    const chunk = rows.slice(i, i + 3);
+    html += '<tr>' + chunk.map(([k,v]) => `<th>${k}</th><td>${dash(v)}</td>`).join('');
+    for (let j = chunk.length; j < 3; j++) html += '<th></th><td></td>';
+    html += '</tr>';
+  }
+  document.getElementById('ayersInfoTable').innerHTML = html;
+}
+
+function fiscalSelectHtml(md) {
+  const m = String(md || '').match(/(\d{1,2})月(\d{1,2})日/);
+  const month = m ? Number(m[1]) : '';
+  const day = m ? Number(m[2]) : '';
+  const months = Array.from({ length: 12 }, (_, i) => i + 1)
+    .map(n => `<option value="${n}"${month === n ? ' selected' : ''}>${n}月</option>`).join('');
+  const days = Array.from({ length: 31 }, (_, i) => i + 1)
+    .map(n => `<option value="${n}"${day === n ? ' selected' : ''}>${n}日</option>`).join('');
+  return `<div class="fiscal-md">
+    <select id="fld_fiscal_month"><option value="">月</option>${months}</select>
+    <select id="fld_fiscal_day"><option value="">日</option>${days}</select>
+  </div>`;
+}
+
+function renderBasicFields(f) {
+  const riskOpts = Object.entries(typeof RISK_LEVELS !== 'undefined' ? RISK_LEVELS : {}).map(([k,v]) =>
+    `<option value="${k}"${String(f.fund_inv_risk_level)===k?' selected':''}>${v}</option>`).join('');
+  const divOpts = (typeof DIVIDEND_TYPES !== 'undefined' ? DIVIDEND_TYPES : []).map(d =>
+    `<option value="${d}"${f.dividend_type===d?' selected':''}>${d}</option>`).join('');
+  const publishers = getActivePublishers();
+  const pubOpts = publishers.map(p =>
+    `<option value="${p.id}"${matchPublisher(f.fund_house_name)?.id === p.id ? ' selected' : ''}>${p.fund_company_name}</option>`
+  ).join('');
+  const catTypes = (typeof FUND_CATEGORY_TYPES !== 'undefined' ? FUND_CATEGORY_TYPES : []);
+  const custom = getCustomCategories();
+  const curCat = f.fund_category_type || f.fund_category || '';
+  const catOpts = catTypes.map(c => `<option value="${c.id}"${curCat===c.id?' selected':''}>${c.label}</option>`).join('')
+    + custom.map(c => `<option value="${c}"${curCat===c?' selected':''}>${c}</option>`).join('');
+  const subOpts = (typeof SUBSCRIPTION_STATUS_OPTIONS !== 'undefined' ? SUBSCRIPTION_STATUS_OPTIONS : []).map(s =>
+    `<option value="${s.id}"${(f.subscription_status||'')===s.id?' selected':''}>${s.label}</option>`).join('');
+  const fiscalVal = f.fiscal_year_end_md || (typeof formatFiscalMd === 'function' ? formatFiscalMd(f.fiscal_year_end) : f.fiscal_year_end);
+  const managerVal = f.fund_managers || f.fund_house_name || '中國平安資產管理（香港）有限公司';
+  const invOpts = `<option value="">空</option><option value="ALL"${f.investor_restriction==='ALL'?' selected':''}>全部</option><option value="PI_ONLY"${f.investor_restriction==='PI_ONLY'?' selected':''}>仅PI</option>`;
+  document.getElementById('basicFieldsRows').innerHTML = [
+    fieldCell('fld_investor_restriction', '投资者限制', '', { select: invOpts, editable: true }),
+    fieldCell('fld_broker_id', '经纪商 ID', f.broker_id, { editable: true }),
+    fieldCell('fld_broker_name', '经纪商名称', f.broker_name, { editable: true }),
+    fieldCell('fld_dividend_type', '分红类别', '', { select: `<option value="">—</option>${divOpts}`, editable: true }),
+    fieldCell('fld_risk_level', '基金风险等级', '', { required: true, select: `<option value="">请选择</option>${riskOpts}`, editable: true }),
+    fieldCell('fld_intra_switch', '是否允许内部转换', '', {
+      select: `<option value="false"${!f.is_allow_intra_switch?' selected':''}>否</option><option value="true"${f.is_allow_intra_switch?' selected':''}>是</option>`,
+      editable: true
+    }),
+    fieldCell('fld_share_class', '份额类别', f.share_class_label, { editable: true }),
+    fieldCell('fld_subscription_status', '基金认购状态', '', { select: subOpts, editable: true }),
+    fieldCell('fld_launch_date', '基金成立日', f.launch_date, { required: true, type: 'date', editable: true }),
+    fieldCell('fld_fiscal_year_end', '年度结算日', '', { editable: true, html: fiscalSelectHtml(fiscalVal) }),
+    fieldCell('fld_trustee', '受托人', f.trustee, { editable: true }),
+    fieldCell('fld_fund_size', '基金规模', f.fund_size, { required: true, editable: true, placeholder: '如 4,208.9 百万美元 (30/06/2026)' }),
+    fieldCell('fld_fund_house_select', '基金公司', '', {
+      required: true, editable: true,
+      select: `<option value="">请选择基金公司</option>${pubOpts}`
+    }),
+    fieldCell('fld_fund_category_type', '基金类别', '', {
+      span: 4, inline: true, editable: true, html: `
+      <select id="fld_fund_category_type">${catOpts}</select>
+      <button type="button" class="btn-sm" onclick="editFundCategory()" title="重命名当前类别">编辑</button>
+      <input id="fld_new_category" placeholder="新建类别名称" style="max-width:160px">
+      <button type="button" class="btn-sm btn-sm-primary" onclick="addFundCategory()">添加</button>`
+    }),
+    fieldCell('fld_fund_managers', '基金经理', managerVal, { span: 4, editable: true }),
+    fieldCell('fld_fund_manager_desc', '基金经理描述', f.fund_manager_desc || '', { textarea: true, editable: true, span: 4 })
+  ].join('');
+  document.getElementById('fld_risk_level').value = f.fund_inv_risk_level ?? '';
+  const divEl = document.getElementById('fld_dividend_type');
+  if (divEl) divEl.value = f.dividend_type || '';
+  const swEl = document.getElementById('fld_intra_switch');
+  if (swEl) swEl.value = f.is_allow_intra_switch ? 'true' : 'false';
+  const sel = document.getElementById('fld_fund_house_select');
+  sel.addEventListener('change', onFundHouseSelectChange);
+  if (!sel.value && f.fund_house_name) {
+    const pub = matchPublisher(f.fund_house_name);
+    if (pub) sel.value = pub.id;
+  }
+  onFundHouseSelectChange();
+  document.getElementById('fld_subscription_status').value = f.subscription_status || '';
+}
+
+function addFundCategory() {
+  const inp = document.getElementById('fld_new_category');
+  const name = inp?.value?.trim();
+  if (!name) { showToast('请输入类别名称'); return; }
+  saveCustomCategory(name);
+  const sel = document.getElementById('fld_fund_category_type');
+  if (![...sel.options].some(o => o.value === name)) {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name;
+    sel.appendChild(o);
+  }
+  sel.value = name;
+  inp.value = '';
+  showToast('已添加基金类别：' + name);
+}
+
+function editFundCategory() {
+  const sel = document.getElementById('fld_fund_category_type');
+  const oldVal = sel?.value;
+  if (!oldVal) { showToast('请先选择要修改的类别'); return; }
+  const oldLabel = sel.selectedOptions?.[0]?.textContent || oldVal;
+  const newName = (prompt('重命名基金类别', oldLabel) || '').trim();
+  if (!newName) return;
+  if (newName === oldLabel || newName === oldVal) return;
+  const builtin = (typeof FUND_CATEGORY_TYPES !== 'undefined' ? FUND_CATEGORY_TYPES : []).some(c => c.id === oldVal);
+  if (builtin) {
+    // 内置枚举：保留原 id，仅改展示文案；自定义名写入本地并作为新选项
+    saveCustomCategory(newName);
+    const opt = document.createElement('option');
+    opt.value = newName;
+    opt.textContent = newName;
+    opt.selected = true;
+    sel.appendChild(opt);
+    showToast('已新建类别：' + newName);
+    return;
+  }
+  renameCustomCategory(oldVal, newName);
+  const opt = [...sel.options].find(o => o.value === oldVal);
+  if (opt) { opt.value = newName; opt.textContent = newName; }
+  sel.value = newName;
+  showToast('已重命名：' + oldLabel + ' → ' + newName);
+}
+
+function getActivePublishers() {
+  return (FUND_HOUSE_PUBLISHERS || []).filter(x => x.status === 'ACTIVE');
+}
+
+function matchPublisher(name) {
+  if (!name) return null;
+  const n = name.trim().toLowerCase();
+  return getActivePublishers().find(p => p.fund_company_name.trim().toLowerCase() === n)
+    || getActivePublishers().find(p => n.includes(p.fund_company_name.trim().toLowerCase().slice(0,4))
+      || p.fund_company_name.trim().toLowerCase().includes(n.slice(0,4)));
+}
+
+function onFundHouseSelectChange() {
+  const sel = document.getElementById('fld_fund_house_select');
+  selectedPublisher = sel?.value ? getActivePublishers().find(x => x.id === sel.value) : null;
+  updateSectionStatus();
+}
+
+const FIELD_LABELS = {
+  fld_risk_level: '基金风险等级', fld_launch_date: '基金成立日', fld_fund_size: '基金规模', fld_fund_house_select: '基金公司',
+  sub_min: '起投金额', sub_inc: '递增金额', sub_fee: '认购费率（%）', sub_confirm: '份额确认日期',
+  sub_open: '开放周期', sub_lock: '锁定期', sub_red_fee: '赎回费率（%）', sub_red_min: '赎回门槛',
+  sub_red_open: '赎回开放日', sub_red_notice: '预约赎回提前天数', sub_mgmt_fee: '基金运作管理费（%）'
+};
+
+function isFieldFilled(id) {
+  const el = document.getElementById(id);
+  if (!el) return false;
+  return String(el.value ?? '').trim() !== '';
+}
+
+function getMissingLabels(ids) {
+  return ids.filter(id => !isFieldFilled(id)).map(id => FIELD_LABELS[id] || id);
+}
+
+function updateSectionStatus() {
+  const setWarn = (elId, missing) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (!missing.length) {
+      el.textContent = '';
+      el.removeAttribute('title');
+      el.onclick = null;
+      return;
+    }
+    el.textContent = '⚠️';
+    el.title = '点击查看未填必填项';
+    el.onclick = (e) => {
+      e.stopPropagation();
+      showToast(missing.join('、') + '必填项不能为空');
+    };
+  };
+  setWarn('tabStatusBasic', getMissingLabels(REQUIRED_BASIC_IDS));
+  setWarn('tabStatusSubscribe', getMissingLabels(REQUIRED_SUB_IDS));
+  setWarn('tabStatusPerf', []);
+  setWarn('tabStatusBrochure', []);
+}
+
+function collectMissingRequired() {
+  return getMissingLabels([...REQUIRED_BASIC_IDS, ...REQUIRED_SUB_IDS]);
+}
+
+function formatScrapeTimeDisplay(ts) {
+  if (!ts) return '';
+  const d = new Date(String(ts).replace(' ', 'T'));
+  if (Number.isNaN(d.getTime())) return ts;
+  const pad = n => String(n).padStart(2, '0');
+  return `抓取时间：${d.getFullYear()}年${pad(d.getMonth()+1)}月${pad(d.getDate())}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function readFiscalMd() {
+  const m = document.getElementById('fld_fiscal_month')?.value;
+  const d = document.getElementById('fld_fiscal_day')?.value;
+  if (!m || !d) return '';
+  return `${Number(m)}月${Number(d)}日`;
+}
+
+function stripPct(val) {
+  if (val == null) return '';
+  return String(val).replace(/%/g, '').trim();
+}
+
+function renderTags() {
+  document.getElementById('tagList').innerHTML = tags.map((t,i) =>
+    `<span class="tag-item">${t}<span class="tag-remove" onclick="removeTag(${i})">×</span></span>`
+  ).join('') || '<span style="color:#bbb;font-size:13px">暂无标签</span>';
+}
+
+function addTag() {
+  const v = document.getElementById('tagInput').value.trim();
+  if (!v || tags.includes(v)) return;
+  tags.push(v); document.getElementById('tagInput').value = ''; renderTags();
+}
+
+function removeTag(i) { tags.splice(i,1); renderTags(); }
+
+function toggleFeatured() {
+  featured = !featured;
+  document.getElementById('featuredSwitch').classList.toggle('on', featured);
+}
+
+function initDetailTabs() {
+  if (detailTabsInited) return;
+  detailTabsInited = true;
+  document.querySelectorAll('.detail-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+}
+
+function parseNavDate(d) {
+  const [dd, mm, yyyy] = d.split('/');
+  return new Date(`${yyyy}-${mm}-${dd}`);
+}
+
+function initNavFilters() {
+  const fromSel = document.getElementById('navFrom');
+  const toSel = document.getElementById('navTo');
+  if (!navData.length) {
+    fromSel.innerHTML = ''; toSel.innerHTML = ''; return;
+  }
+  const opts = navData.map(r => `<option value="${r.d}">${r.d}</option>`).join('');
+  fromSel.innerHTML = opts;
+  toSel.innerHTML = opts;
+  fromSel.value = navData[navData.length - 1].d;
+  toSel.value = navData[0].d;
+}
+
+function filterNavRows() {
+  const from = document.getElementById('navFrom').value;
+  const to = document.getElementById('navTo').value;
+  let rows = navData;
+  if (from && to) {
+    const fromT = parseNavDate(from).getTime();
+    const toT = parseNavDate(to).getTime();
+    const minT = Math.min(fromT, toT);
+    const maxT = Math.max(fromT, toT);
+    rows = navData.filter(r => {
+      const t = parseNavDate(r.d).getTime();
+      return t >= minT && t <= maxT;
+    });
+  }
+  renderNavBody(rows);
+}
+
+function renderNavBody(rows) {
+  const ro = isReadOnly ? 'readonly' : '';
+  document.getElementById('navBody').innerHTML = rows.map((r) => {
+    const checked = selectedNavDates.has(r.d) ? 'checked' : '';
+    return `<tr class="${selectedNavDates.has(r.d) ? 'selected' : ''}" data-date="${r.d}">
+      <td><input type="checkbox" ${checked} onchange="toggleNavSelect('${r.d}', this.checked)" ${isReadOnly ? 'disabled' : ''}></td>
+      <td>${r.d}</td>
+      <td><input class="nav-val" data-date="${r.d}" value="${r.v}" ${ro}></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="3" style="text-align:center;color:#bbb;padding:20px">暂无数据</td></tr>';
+}
+
+function toggleNavSelect(d, checked) {
+  if (checked) selectedNavDates.add(d); else selectedNavDates.delete(d);
+  document.querySelectorAll('#navBody tr').forEach(tr => {
+    tr.classList.toggle('selected', selectedNavDates.has(tr.dataset.date));
+  });
+}
+
+function getAnnualData(f, c) {
+  if (f.perf?.annual) return f.perf.annual;
+  if (c?.share_classes) {
+    const sc = c.share_classes.find(s => s.product_code === f.product_code);
+    if (sc?.annual_returns) return sc.annual_returns;
+  }
+  return {};
+}
+
+function syncCumColumnLabels() {
+  cumColumns.forEach(c => {
+    const el = document.getElementById('cum_lbl_' + c.key);
+    if (el && el.value.trim()) c.label = el.value.trim();
+  });
+}
+
+function renderCumPerf(f) {
+  const p = f?.perf || {};
+  const ro = isReadOnly ? 'readonly' : '';
+  document.getElementById('perfCumHead').innerHTML = cumColumns.map(c =>
+    `<th><input type="text" id="cum_lbl_${c.key}" value="${c.label}" ${ro}></th>`
+  ).join('');
+  document.getElementById('perfCumBody').innerHTML = cumColumns.map(c =>
+    `<td><input id="perf_${c.key}" value="${p[c.key] != null ? p[c.key] : ''}" placeholder="—" ${ro}></td>`
+  ).join('');
+}
+
+function addCumColumn() {
+  syncCumColumnLabels();
+  const key = 'c_' + Date.now();
+  cumColumns.push({ key, label: '新列' });
+  renderCumPerf(fund || {});
+  const el = document.getElementById('cum_lbl_' + key);
+  if (el && !isReadOnly) { el.focus(); el.select(); }
+}
+
+function removeCumColumn() {
+  if (cumColumns.length <= 1) { showToast('至少保留一列'); return; }
+  syncCumColumnLabels();
+  cumColumns.pop();
+  renderCumPerf(fund || {});
+}
+
+function yearsFromLaunch(f) {
+  const launch = f?.launch_date;
+  let startYear = new Date().getFullYear();
+  if (launch) {
+    const d = new Date(launch);
+    if (!Number.isNaN(d.getTime())) startYear = d.getFullYear();
+  }
+  const endYear = new Date().getFullYear();
+  const years = [];
+  for (let y = startYear; y <= endYear; y++) years.push(y);
+  return years.length ? years : [endYear];
+}
+
+function initAnnualYears(f, c) {
+  const annual = getAnnualData(f, c);
+  const dataYears = Object.keys(annual).map(Number).filter(y => !Number.isNaN(y)).sort((a, b) => a - b);
+  annualYearsDynamic = dataYears.length ? dataYears : yearsFromLaunch(f);
+  if (!annualYearsDynamic.includes('成立日至今')) annualYearsDynamic.push('成立日至今');
+}
+
+function renderPerfAnnual(f, c, sc, ccy) {
+  document.getElementById('perfAnnualTitle').textContent = `${sc} ${ccy}：年度表现(%)`;
+  const annual = getAnnualData(f, c);
+  const rsi = f.perf?.rsi;
+  const ro = isReadOnly ? 'readonly' : '';
+  document.getElementById('perfAnnualHead').innerHTML = annualYearsDynamic.map(y => `<th>${y}</th>`).join('');
+  document.getElementById('perfAnnualBody').innerHTML = annualYearsDynamic.map(y => {
+    let val = y === '成立日至今' ? rsi : annual[y];
+    const id = y === '成立日至今' ? 'perf_rsi' : `perf_y_${y}`;
+    const display = val == null || val === '' ? '' : val;
+    return `<td><input id="${id}" value="${display}" placeholder="—" ${ro}></td>`;
+  }).join('');
+}
+
+function monthKeysForYear(year) {
+  return Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`);
+}
+
+function resetMonthlyThisYear() {
+  const y = new Date().getFullYear();
+  monthlyKeysDynamic = monthKeysForYear(y);
+  const inp = document.getElementById('monthYearSearch');
+  if (inp) inp.value = y;
+  if (fund) renderPerfMonthly(fund.share_class_label || '', fund.base_ccy || '', fund);
+}
+
+function syncMonthlyTitle(sc, ccy) {
+  const y = monthlyKeysDynamic[0]?.split('-')[0] || document.getElementById('monthYearSearch')?.value || new Date().getFullYear();
+  const titleEl = document.getElementById('perfMonthlyTitle');
+  if (titleEl) titleEl.textContent = `${sc || ''} ${ccy || ''}：${y}年月度表现(%)`.replace(/^\s+/, '');
+}
+
+function loadMonthlyByYear() {
+  const y = parseInt(document.getElementById('monthYearSearch')?.value, 10);
+  if (!y) { showToast('请输入年份'); return; }
+  monthlyKeysDynamic = monthKeysForYear(y);
+  if (fund) renderPerfMonthly(fund.share_class_label || '', fund.base_ccy || '', fund);
+}
+
+function monthKeyLabel(key) {
+  const [y, m] = key.split('-');
+  return `${Number(m)}月`;
+}
+
+function renderPerfMonthly(sc, ccy, f) {
+  syncMonthlyTitle(sc, ccy);
+  const monthly = f?.perf?.monthly || {};
+  const ro = isReadOnly ? 'readonly' : '';
+  document.getElementById('perfMonthlyHead').innerHTML = monthlyKeysDynamic.map(m => `<th>${monthKeyLabel(m)}</th>`).join('');
+  document.getElementById('perfMonthlyBody').innerHTML = monthlyKeysDynamic.map((m, i) => {
+    const val = monthly[m] != null ? monthly[m] : '';
+    return `<td><input id="perf_mo_${i}" data-month="${m}" value="${val}" placeholder="—" ${ro}></td>`;
+  }).join('');
+}
+
+function addAnnualYear() {
+  const nums = annualYearsDynamic.filter(y => y !== '成立日至今').map(Number);
+  const next = nums.length ? Math.max(...nums) + 1 : new Date().getFullYear();
+  const rsiIdx = annualYearsDynamic.indexOf('成立日至今');
+  if (rsiIdx >= 0) annualYearsDynamic.splice(rsiIdx, 0, next);
+  else annualYearsDynamic.push(next);
+  renderPerfAnnual(fund, null, fund?.share_class_label || '', fund?.base_ccy || '');
+}
+
+function removeAnnualYear() {
+  const nums = annualYearsDynamic.filter(y => y !== '成立日至今');
+  if (nums.length <= 1) return;
+  annualYearsDynamic = annualYearsDynamic.filter(y => y !== nums[nums.length - 1]);
+  renderPerfAnnual(fund, null, fund?.share_class_label || '', fund?.base_ccy || '');
+}
+
+function addNavRow() {
+  const dateEl = document.getElementById('navAddDate');
+  const valEl = document.getElementById('navAddValue');
+  let d = dateEl?.value;
+  let v = valEl?.value?.trim() || '';
+  if (!d) {
+    const today = new Date();
+    d = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  }
+  const [yyyy, mm, dd] = d.split('-');
+  const display = `${dd}/${mm}/${yyyy}`;
+  if (navData.some(r => r.d === display)) { showToast('该日期已存在'); return; }
+  navData.unshift({ d: display, v });
+  if (dateEl) dateEl.value = '';
+  if (valEl) valEl.value = '';
+  initNavFilters();
+  filterNavRows();
+  showToast('已添加净值行');
+}
+
+function removeSelectedNavRow() {
+  if (!selectedNavDates.size) { showToast('请先勾选要删除的净值行'); return; }
+  navData = navData.filter(r => !selectedNavDates.has(r.d));
+  selectedNavDates.clear();
+  initNavFilters();
+  filterNavRows();
+  showToast('已删除选中净值行');
+}
+
+function cloneFundDocuments(src) {
+  const base = typeof emptyFundDocuments === 'function' ? emptyFundDocuments() : {};
+  if (!src) return base;
+  const out = JSON.parse(JSON.stringify(base));
+  (typeof DOC_CATEGORIES !== 'undefined' ? DOC_CATEGORIES : []).forEach(c => {
+    const byLang = src[c.id] || {};
+    ['en', 'zh-CN', 'zh-TW'].forEach(lang => {
+      out[c.id][lang] = (byLang[lang] || []).map(d => ({ ...d }));
+    });
+  });
+  return out;
+}
+
+function renderBrochureDocs() {
+  const root = document.getElementById('brochureDocRoot');
+  if (!root) return;
+  const cats = typeof DOC_CATEGORIES !== 'undefined' ? DOC_CATEGORIES : [];
+  const langs = typeof DOC_LANGUAGES !== 'undefined' ? DOC_LANGUAGES : [];
+  root.innerHTML = cats.map(cat => {
+    const activeLang = docLang[cat.id] || 'zh-CN';
+    return `
+    <div class="doc-cat-block" data-cat="${cat.id}"
+      ondragover="onDocDragOver(event)" ondragleave="onDocDragLeave(event)" ondrop="onDocDrop(event,'${cat.id}')">
+      <div class="doc-cat-title">${cat.labelZh || cat.label} <span style="font-weight:400;color:#999;font-size:12px">可拖拽文件到其他分类</span></div>
+      <div class="doc-lang-tabs">
+        ${langs.map(l => `<button type="button" class="doc-lang-tab${activeLang === l.id ? ' active' : ''}" onclick="switchDocLang('${cat.id}','${l.id}')">${l.label}</button>`).join('')}
+      </div>
+      <div id="doc-list-${cat.id}"></div>
+      <div class="file-upload-row" id="upload-row-${cat.id}" style="display:${isReadOnly ? 'none' : 'flex'};padding:8px 20px;gap:8px;align-items:center">
+        <input type="file" id="upload-${cat.id}" style="font-size:12px">
+        <button type="button" class="btn-sm btn-sm-primary" onclick="uploadBrochureDoc('${cat.id}')">上传</button>
+      </div>
+    </div>`;
+  }).join('');
+  cats.forEach(c => {
+    if (!docLang[c.id]) docLang[c.id] = 'zh-CN';
+    renderDocList(c.id);
+  });
+}
+
+function renderDocList(catId) {
+  const lang = docLang[catId] || 'zh-CN';
+  const list = fundDocuments[catId]?.[lang] || [];
+  const el = document.getElementById('doc-list-' + catId);
+  if (!el) return;
+  const fileRow = (d, i) => `<div class="file-row" draggable="${isReadOnly ? 'false' : 'true'}"
+    ondragstart="onDocDragStart(event,'${catId}',${i})" ondragend="onDocDragEnd(event)">
+    <span class="file-idx">${i + 1}.</span><span class="file-name">${d.doc_name || d.name}</span>
+    <a class="file-action" href="${d.doc_url || '#'}" target="_blank">查看</a>
+    ${isReadOnly ? '' : `<button type="button" class="btn-link btn-link-muted" onclick="removeBrochureDoc('${catId}',${i})">删除</button>`}
+  </div>`;
+  el.innerHTML = list.length ? list.map(fileRow).join('') : '<div class="file-row"><span style="color:#bbb">暂无（可拖拽其他分类文件到此）</span></div>';
+}
+
+function onDocDragStart(e, catId, idx) {
+  dragDoc = { catId, idx, lang: docLang[catId] || 'zh-CN' };
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDocDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.doc-cat-block').forEach(el => el.classList.remove('drag-over'));
+}
+function onDocDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+function onDocDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onDocDrop(e, toCatId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!dragDoc || dragDoc.catId === toCatId) return;
+  const fromLang = dragDoc.lang;
+  const list = fundDocuments[dragDoc.catId]?.[fromLang];
+  if (!list || !list[dragDoc.idx]) return;
+  const [doc] = list.splice(dragDoc.idx, 1);
+  const toLang = docLang[toCatId] || 'zh-CN';
+  fundDocuments[toCatId] = fundDocuments[toCatId] || { en: [], 'zh-CN': [], 'zh-TW': [] };
+  fundDocuments[toCatId][toLang] = fundDocuments[toCatId][toLang] || [];
+  fundDocuments[toCatId][toLang].push(doc);
+  renderDocList(dragDoc.catId);
+  renderDocList(toCatId);
+  dragDoc = null;
+  showToast('已移动到目标分类');
+}
+
+function switchDocLang(catId, lang) {
+  docLang[catId] = lang;
+  const block = document.querySelector(`.doc-cat-block[data-cat="${catId}"]`);
+  if (block) {
+    const langs = typeof DOC_LANGUAGES !== 'undefined' ? DOC_LANGUAGES : [];
+    block.querySelectorAll('.doc-lang-tab').forEach((t, i) => {
+      t.classList.toggle('active', langs[i]?.id === lang);
+    });
+  }
+  renderDocList(catId);
+}
+
+function uploadBrochureDoc(catId) {
+  const input = document.getElementById('upload-' + catId);
+  const file = input?.files?.[0];
+  if (!file) { showToast('请选择文件'); return; }
+  const lang = docLang[catId] || 'zh-CN';
+  fundDocuments[catId] = fundDocuments[catId] || { en: [], 'zh-CN': [], 'zh-TW': [] };
+  fundDocuments[catId][lang].push({ doc_name: file.name, doc_url: '#', uploaded: true });
+  renderDocList(catId);
+  input.value = '';
+  showToast('附件已添加');
+}
+
+function removeBrochureDoc(catId, idx) {
+  const lang = docLang[catId] || 'zh-CN';
+  const list = fundDocuments[catId]?.[lang];
+  if (!list) return;
+  list.splice(idx, 1);
+  renderDocList(catId);
+}
+
+function subEditableRow(id, label, val, opts = {}) {
+  return fieldCell(id, label, val, {
+    required: opts.required,
+    textarea: opts.full || opts.textarea,
+    span: opts.full ? 4 : undefined,
+    editable: true
+  });
+}
+
+function bindRequiredWatchers() {
+  [...REQUIRED_BASIC_IDS, ...REQUIRED_SUB_IDS].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateSectionStatus);
+    if (el) el.addEventListener('change', updateSectionStatus);
+  });
+}
+
+function syncWebsiteUrlUi() {
+  const input = document.getElementById('fld_website_url');
+  const url = (input?.value || '').trim();
+  const viewWrap = document.getElementById('fundWebsiteViewWrap');
+  const link = document.getElementById('fundWebsite');
+  if (isReadOnly && viewWrap && link) {
+    if (url) {
+      link.href = url;
+      link.textContent = url;
+      viewWrap.style.display = 'flex';
+    } else {
+      viewWrap.style.display = 'none';
+    }
+  }
+}
+
+function loadDetail(code) {
+  initDetailTabs();
+  fund = findFund(code) || findFund('HK0000720752');
+  if (!fund) {
+    document.getElementById('fundTitle').textContent = '未找到产品';
+    return;
+  }
+  const c = fund.product_code === 'HK0000720752' ? (typeof PINGAN_PAMMF !== 'undefined' ? PINGAN_PAMMF : null) : null;
+
+  document.getElementById('fundTitle').textContent = fund.product_name;
+  const urlEl = document.getElementById('fld_website_url');
+  if (urlEl) {
+    urlEl.value = fund.website_url || '';
+    if (!urlEl.dataset.bound) {
+      urlEl.addEventListener('input', syncWebsiteUrlUi);
+      urlEl.dataset.bound = '1';
+    }
+  }
+  syncWebsiteUrlUi();
+  const scrapeTxt = formatScrapeTimeDisplay(fund.last_scrape_at);
+  document.getElementById('scrapeTimeDisplay').textContent = scrapeTxt;
+  const headerScrape = document.getElementById('headerScrapeTime');
+  if (headerScrape) headerScrape.textContent = scrapeTxt;
+
+  featured = !!fund.is_featured;
+  document.getElementById('featuredSwitch').classList.toggle('on', featured);
+  document.getElementById('productStatus').value = fund.product_status || 'DELISTED';
+
+  renderAyersTable(fund);
+  renderBasicFields(fund);
+
+  selectedPublisher = matchPublisher(fund.fund_house_name);
+  document.getElementById('fundObjective').value = fund.fund_objective || '';
+  document.getElementById('fundStrategy').value = fund.strategy || '';
+  tags = [...(fund.product_tags || [])];
+  renderTags();
+
+  const sc = fund.share_class_label || 'I类';
+  const ccy = fund.base_ccy || 'USD';
+  document.getElementById('perfCumTitle').textContent = `${sc} ${ccy}：累积表现(%)`;
+  document.getElementById('perfAnnualFoot').textContent = fund.launch_date ? `自成立日 ${fund.launch_date}` : '';
+  cumColumns = fund.perf?.cum_columns || [
+    { key: 'm1', label: '1月' }, { key: 'm3', label: '3月' }, { key: 'm6', label: '6月' },
+    { key: 'ytd', label: 'YTD' }, { key: 'y1', label: '1年' }, { key: 'y3', label: '3年' }
+  ];
+  renderCumPerf(fund);
+  initAnnualYears(fund, c);
+  renderPerfAnnual(fund, c, sc, ccy);
+  resetMonthlyThisYear();
+
+  document.getElementById('navColHead').textContent = `基金净值 (${sc} ${ccy})`;
+  selectedNavDates.clear();
+  navData = (fund.nav_history || NAV_ROWS).map(r => ({ ...r }));
+  initNavFilters();
+  filterNavRows();
+
+  const sub = fund.subscribe || (c ? {
+    min_amount: c.min_sub_initamount ? `最低${c.min_sub_initamount}` : '',
+    increment_amount: '最低1美元',
+    subscription_fee_pct: stripPct(c.subscription_fee),
+    confirm_date: '每日', open_period: '每日开放', lock_period: '无',
+    redemption_fee_pct: '0', redemption_threshold: '最低赎回金额: 1美元',
+    redemption_open_day: '每日开放', redemption_notice_days: '交易日上午10时整前',
+    management_fee_pct: stripPct(c.management_fee), remark: c.sub_remark || ''
+  } : {});
+  document.getElementById('subscribeRows').innerHTML = [
+    subEditableRow('sub_min', '起投金额', sub.min_amount || (fund.min_sub_initamount ? `最低${fund.min_sub_initamount}` : ''), { required: true }),
+    subEditableRow('sub_inc', '递增金额', sub.increment_amount || '', { required: true }),
+    subEditableRow('sub_fee', '认购费率（%）', stripPct(sub.subscription_fee_pct || sub.subscription_fee || ''), { required: true }),
+    subEditableRow('sub_confirm', '份额确认日期', sub.confirm_date || '', { required: true }),
+    subEditableRow('sub_open', '开放周期', sub.open_period || '', { required: true }),
+    subEditableRow('sub_lock', '锁定期', sub.lock_period || '', { required: true }),
+    subEditableRow('sub_red_fee', '赎回费率（%）', stripPct(sub.redemption_fee_pct || sub.redemption_fee || ''), { required: true }),
+    subEditableRow('sub_red_min', '赎回门槛', sub.redemption_threshold || '', { required: true }),
+    subEditableRow('sub_red_open', '赎回开放日', sub.redemption_open_day || '', { required: true }),
+    subEditableRow('sub_red_notice', '预约赎回提前天数', sub.redemption_notice_days || '', { required: true }),
+    subEditableRow('sub_mgmt_fee', '基金运作管理费（%）', stripPct(sub.management_fee_pct || sub.management_fee || ''), { required: true }),
+    subEditableRow('sub_remark', '备注', sub.remark || sub.sub_remark || '', { full: true })
+  ].join('');
+
+  fundDocuments = cloneFundDocuments(fund.fund_documents);
+  if (!Object.keys(fundDocuments).length && c?.documents_scraped) {
+    fundDocuments = cloneFundDocuments(emptyFundDocuments());
+    (c.documents_scraped || []).forEach(d => {
+      const isReport = ['年度报告','中期报告','基金月报','产品资料概要'].includes(d.doc_type);
+      const cat = isReport ? 'fund_reporting' : 'others';
+      fundDocuments[cat]['zh-CN'].push({ doc_name: d.doc_name || d.doc_type, doc_url: d.doc_url || '#' });
+    });
+  }
+  renderBrochureDocs();
+  document.getElementById('internalRemarks').value = fund.internal_remarks || c?.internal_remarks || '';
+
+  document.querySelectorAll('.detail-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  document.querySelectorAll('.tab-panel').forEach((p,i) => p.classList.toggle('active', i===0));
+  bindRequiredWatchers();
+  updateSectionStatus();
+}
+
+function saveProduct() {
+  if (!fund) return;
+  const missing = collectMissingRequired();
+  if (missing.length) {
+    showToast('必填项' + missing.join('、') + '未填');
+    return;
+  }
+  fund.share_class_label = document.getElementById('fld_share_class').value;
+  fund.fund_category_type = document.getElementById('fld_fund_category_type')?.value || '';
+  fund.fund_category = fund.fund_category_type || fund.fund_category;
+  fund.subscription_status = document.getElementById('fld_subscription_status')?.value || '';
+  fund.investor_restriction = document.getElementById('fld_investor_restriction')?.value || '';
+  fund.launch_date = document.getElementById('fld_launch_date').value;
+  fund.fiscal_year_end = readFiscalMd();
+  fund.trustee = document.getElementById('fld_trustee').value;
+  fund.fund_size = document.getElementById('fld_fund_size').value;
+  fund.fund_managers = document.getElementById('fld_fund_managers').value;
+  fund.website_url = document.getElementById('fld_website_url')?.value.trim() || '';
+  fund.fund_manager_desc = document.getElementById('fld_fund_manager_desc')?.value || '';
+  fund.broker_id = document.getElementById('fld_broker_id')?.value || fund.broker_id;
+  fund.broker_name = document.getElementById('fld_broker_name')?.value || fund.broker_name;
+  fund.dividend_type = document.getElementById('fld_dividend_type')?.value || '';
+  fund.fund_inv_risk_level = document.getElementById('fld_risk_level')?.value || fund.fund_inv_risk_level;
+  fund.is_allow_intra_switch = document.getElementById('fld_intra_switch')?.value === 'true';
+  const pubSel = document.getElementById('fld_fund_house_select');
+  fund.fund_house_name = selectedPublisher?.fund_company_name
+    || (pubSel?.selectedOptions?.[0]?.textContent) || fund.fund_house_name;
+  fund.fund_objective = document.getElementById('fundObjective').value;
+  fund.strategy = document.getElementById('fundStrategy').value;
+  fund.product_tags = [...tags];
+  fund.is_featured = featured;
+  fund.product_status = document.getElementById('productStatus').value;
+  fund.perf = fund.perf || { annual: {}, monthly: {} };
+  syncCumColumnLabels();
+  fund.perf.cum_columns = cumColumns.map(c => ({ key: c.key, label: c.label }));
+  cumColumns.forEach(c => {
+    const el = document.getElementById('perf_' + c.key);
+    if (el && el.value !== '') fund.perf[c.key] = parseFloat(el.value);
+  });
+  const rsiEl = document.getElementById('perf_rsi');
+  if (rsiEl && rsiEl.value !== '') fund.perf.rsi = parseFloat(rsiEl.value);
+  fund.perf.annual = fund.perf.annual || {};
+  annualYearsDynamic.filter(y => y !== '成立日至今').forEach(y => {
+    const el = document.getElementById('perf_y_' + y);
+    if (el && el.value !== '') fund.perf.annual[y] = parseFloat(el.value);
+  });
+  fund.perf.monthly = fund.perf.monthly || {};
+  monthlyKeysDynamic.forEach((m, i) => {
+    const el = document.getElementById('perf_mo_' + i);
+    if (el && el.value !== '') fund.perf.monthly[m] = parseFloat(el.value);
+  });
+  document.querySelectorAll('.nav-val').forEach(inp => {
+    const row = navData.find(r => r.d === inp.dataset.date);
+    if (row) row.v = inp.value;
+  });
+  fund.nav_history = navData.map(r => ({ ...r }));
+  fund.subscribe = {
+    min_amount: document.getElementById('sub_min').value,
+    increment_amount: document.getElementById('sub_inc').value,
+    subscription_fee_pct: document.getElementById('sub_fee').value,
+    confirm_date: document.getElementById('sub_confirm').value,
+    open_period: document.getElementById('sub_open').value,
+    lock_period: document.getElementById('sub_lock').value,
+    redemption_fee_pct: document.getElementById('sub_red_fee').value,
+    redemption_threshold: document.getElementById('sub_red_min').value,
+    redemption_open_day: document.getElementById('sub_red_open').value,
+    redemption_notice_days: document.getElementById('sub_red_notice').value,
+    management_fee_pct: document.getElementById('sub_mgmt_fee')?.value || '',
+    remark: document.getElementById('sub_remark')?.value || ''
+  };
+  fund.fund_documents = cloneFundDocuments(fundDocuments);
+  fund.internal_remarks = document.getElementById('internalRemarks').value;
+  fund.updated_at = new Date().toISOString().slice(0,10);
+  showToast('保存成功');
+  setTimeout(() => Router.go('/list'), 1000);
+}
+
+function scrapePublicData() {
+  showToast('正在抓取官网公共数据…');
+  setTimeout(() => {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const ts = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    if (fund) fund.last_scrape_at = ts;
+    const txt = formatScrapeTimeDisplay(ts);
+    document.getElementById('scrapeTimeDisplay').textContent = txt;
+    const headerScrape = document.getElementById('headerScrapeTime');
+    if (headerScrape) headerScrape.textContent = txt;
+    if (fund?.product_code === 'HK0000720752' && typeof PINGAN_PAMMF !== 'undefined') {
+      fund.fund_size = fund.fund_size || '4,208.9 百万美元 (30/06/2026)';
+      fund.fiscal_year_end = '6月30日';
+      const mEl = document.getElementById('fld_fiscal_month');
+      const dEl = document.getElementById('fld_fiscal_day');
+      if (mEl) mEl.value = '6';
+      if (dEl) dEl.value = '30';
+      document.getElementById('fld_fund_size').value = fund.fund_size;
+      fundDocuments = cloneFundDocuments(fund.fund_documents);
+      renderBrochureDocs();
+    }
+    updateSectionStatus();
+    showToast('抓取完成');
+  }, 1200);
+}
+
+function openImportModal() {
+  document.getElementById('importModal').classList.add('show');
+  document.getElementById('importFileInput').value = '';
+}
+
+function closeImportModal() {
+  document.getElementById('importModal').classList.remove('show');
+}
+
+function parseCsvLine(line) {
+  const out = [];
+  let cur = '';
+  let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; continue; }
+    if (ch === ',' && !inQ) { out.push(cur.trim()); cur = ''; continue; }
+    cur += ch;
+  }
+  out.push(cur.trim());
+  return out;
+}
+
+function normalizeInvestorRestriction(val) {
+  const v = (val || '').trim();
+  if (v === '仅PI' || v === 'PI' || v.toUpperCase() === 'PI_ONLY') return 'PI_ONLY';
+  if (v === '全部' || v.toUpperCase() === 'ALL') return 'ALL';
+  return v;
+}
+
+function handleImportFile() {
+  const input = document.getElementById('importFileInput');
+  const file = input.files?.[0];
+  if (!file) { showToast('请先选择表格文件'); return; }
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext !== 'csv') {
+    showToast('导入模板待补充：当前原型仅支持 CSV，已选择「' + file.name + '」');
+    closeImportModal();
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const lines = String(reader.result).split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) { showToast('文件无有效数据行'); return; }
+      const headers = parseCsvLine(lines[0]).map(h => h.trim());
+      const codeIdx = headers.findIndex(h => /产品代码|product_code|isin/i.test(h));
+      if (codeIdx < 0) {
+        showToast('导入模板待补充：未识别到「产品代码」列');
+        return;
+      }
+      let updated = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCsvLine(lines[i]);
+        const code = cols[codeIdx];
+        if (!code) continue;
+        const p = MMF_PRODUCTS.find(x => x.product_code === code);
+        if (!p) continue;
+        headers.forEach((h, idx) => {
+          const val = cols[idx];
+          if (val == null || val === '') return;
+          if (/产品名称|product_name/i.test(h)) p.product_name = val;
+          else if (/基金公司|fund_house/i.test(h)) p.fund_house_name = val;
+          else if (/份额类别|share_class/i.test(h)) p.share_class_label = val;
+          else if (/货币|币种|base_ccy/i.test(h)) p.base_ccy = val;
+          else if (/投资者限制|investor/i.test(h)) p.investor_restriction = normalizeInvestorRestriction(val);
+          else if (/状态|product_status/i.test(h)) {
+            const map = { '已上架': 'LISTED', '已下架': 'DELISTED', '暂停': 'PAUSED' };
+            p.product_status = map[val] || val;
+          }
+        });
+        updated++;
+      }
+      closeImportModal();
+      updateStats();
+      applyFilters();
+      showToast(updated ? `已导入并更新 ${updated} 条产品` : '未匹配到可更新产品，请确认模板与产品代码');
+    } catch (e) {
+      showToast('导入失败：' + e.message);
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const tbody = document.getElementById('tableBody');
+  if (typeof MMF_PRODUCTS === 'undefined') {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="empty-state">数据文件加载失败，请确认 data/mmf_products.js 可访问</td></tr>';
+    return;
+  }
+  filtered = [...MMF_PRODUCTS];
+  try {
+    updateStats();
+    renderTable(filtered);
+  } catch (e) {
+    console.error(e);
+    if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="empty-state">页面渲染失败：' + e.message + '</td></tr>';
+  }
+  document.getElementById('searchInput')?.addEventListener('keypress', e => { if (e.key==='Enter') applyFilters(); });
+  document.getElementById('tagInput')?.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); addTag(); } });
+  Router.init();
+});
+</script>
+</body>
+</html>
