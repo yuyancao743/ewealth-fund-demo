@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>跳转中 - 基金详情</title>
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var id = params.get('id');
+  var target = id ? 'index.html#/detail/' + encodeURIComponent(id) : 'index.html#/list';
+  location.replace(target);
+})();
+</script>
+</head>
+<body>
+<p>正在跳转到基金详情… <a id="link" href="index.html#/list">点击此处</a></p>
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var id = params.get('id');
+  var target = id ? 'index.html#/detail/' + encodeURIComponent(id) : 'index.html#/list';
+  document.getElementById('link').href = target;
+})();
+</script>
+</body>
+</html>
