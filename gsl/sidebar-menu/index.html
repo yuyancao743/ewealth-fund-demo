@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSL 中台侧边栏菜单 · v3.6 信息架构原型</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        .container { display: flex; height: 100vh; overflow: hidden; }
+
+        .sidebar {
+            width: 240px;
+            background: #001529;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+            flex-shrink: 0;
+        }
+
+        .logo {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            color: #fff;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            min-height: 64px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: 700;
+            color: #C5A572;
+        }
+
+        .logo-text { font-size: 14px; font-weight: 500; line-height: 1.3; }
+        .logo-sub { font-size: 11px; opacity: 0.55; margin-top: 2px; }
+
+        .badge-test {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 6px;
+            font-size: 10px;
+            background: #ff4d4f;
+            border-radius: 2px;
+            vertical-align: middle;
+        }
+
+        .nav-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0 16px;
+        }
+
+        .nav-menu::-webkit-scrollbar { width: 4px; }
+        .nav-menu::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+        .nav-item {
+            padding: 11px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            color: rgba(255,255,255,0.65);
+            transition: all 0.2s;
+            font-size: 13.5px;
+            position: relative;
+            user-select: none;
+        }
+
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+        .nav-item.active {
+            background: #1890ff;
+            color: #fff;
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #fff;
+        }
+
+        .nav-parent {
+            font-weight: 500;
+            font-size: 14px;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .nav-parent.open {
+            color: #fff;
+            background: rgba(255,255,255,0.06);
+        }
+
+        .nav-icon {
+            margin-right: 10px;
+            font-size: 14px;
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .nav-arrow {
+            margin-left: auto;
+            color: rgba(255,255,255,0.45);
+            font-size: 14px;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .nav-arrow.open { transform: rotate(90deg); }
+
+        .nav-sub-menu {
+            background: rgba(0,0,0,0.15);
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.35s ease;
+        }
+
+        .nav-sub-menu.open { max-height: 2000px; }
+
+        .nav-sub-menu .nav-item {
+            padding: 10px 20px 10px 48px;
+            font-size: 13px;
+            font-weight: 400;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .nav-sub-menu .nav-item.active {
+            background: rgba(24,144,255,0.85);
+            color: #fff;
+        }
+
+        .nav-sub-menu-l3 {
+            background: rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.25s ease;
+        }
+
+        .nav-sub-menu-l3.open { max-height: 800px; }
+
+        .nav-sub-menu-l3 .nav-item {
+            padding-left: 64px;
+            font-size: 12.5px;
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin: 6px 16px;
+        }
+
+        .origin-float {
+            position: fixed;
+            z-index: 9999;
+            max-width: 280px;
+            padding: 10px 14px;
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            font-size: 12px;
+            line-height: 1.55;
+            color: #614700;
+            pointer-events: none;
+            animation: floatIn 0.18s ease;
+        }
+
+        .origin-float strong {
+            display: block;
+            color: #ad6800;
+            font-size: 11px;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .origin-float .new-name {
+            color: #8c8c8c;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        @keyframes floatIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tag-rename { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
+        .tag-merge { background: #f9f0ff; color: #531dab; border: 1px solid #d3adf7; }
+        .tag-same { background: #f5f5f5; color: #8c8c8c; border: 1px solid #d9d9d9; }
+        .tag-alias { background: #e6f7ff; color: #096dd9; border: 1px solid #91d5ff; }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            padding: 0 24px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .welcome { font-size: 13px; color: #666; }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #1890ff;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .info-banner {
+            background: linear-gradient(90deg, #e6f7ff, #f0f9ff);
+            border: 1px solid #91d5ff;
+            border-radius: 4px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #0050b3;
+            line-height: 1.7;
+        }
+
+        .panel {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+
+        .panel-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .panel-body { padding: 20px 24px; }
+
+        .breadcrumb {
+            font-size: 13px;
+            color: #8c8c8c;
+            margin-bottom: 8px;
+        }
+
+        .breadcrumb span { color: #1890ff; }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #262626;
+            margin-bottom: 16px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #fafafa;
+            border: 1px solid #f0f0f0;
+            border-radius: 4px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1890ff;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #8c8c8c;
+            margin-top: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead { background: #fafafa; }
+
+        th {
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        td {
+            padding: 10px 14px;
+            color: #555;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tbody tr:hover { background: #fafafa; }
+
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 2px;
+            font-size: 12px;
+        }
+
+        .tag-blue { background: #e6f7ff; color: #096dd9; border: 1px solid #91d5ff; }
+        .tag-green { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+        .tag-orange { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
+
+        .tree-pre {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            line-height: 1.65;
+            color: #434343;
+            background: #fafafa;
+            border: 1px solid #f0f0f0;
+            border-radius: 4px;
+            padding: 16px 18px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #8c8c8c;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        .dot-l1 { background: #001529; border: 1px solid #1890ff; }
+        .dot-l2 { background: #69c0ff; }
+        .dot-l3 { background: #bae7ff; }
+    </style>
+</head>
+<body>
+<div id="originFloat" class="origin-float" style="display:none" aria-live="polite"></div>
+<div class="container">
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">GH</div>
+            <div>
+                <div class="logo-text">
+                    金马证券业务中台
+                    <span class="badge-test">测试版</span>
+                </div>
+                <div class="logo-sub">GSL · v3.6 信息架构</div>
+            </div>
+        </div>
+        <div class="nav-menu" id="navMenu"></div>
+    </nav>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="welcome">Hi，欢迎使用金马证券中后台系统测试版</div>
+            <div class="user-info">
+                <span>lisa</span>
+                <div class="user-avatar">L</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="info-banner">
+                <strong>GSL 中台侧边栏菜单 · v3.6</strong> · 折叠 9 项（首页 + 8 父菜单），最多 3 级。
+                父菜单无原名提示；<strong>子菜单</strong>文案有变更时，<strong>鼠标悬停</strong>显示现网原名，移开即消失。
+            </div>
+
+            <div class="stats-row" id="statsRow">
+                <div class="stat-card">
+                    <div class="stat-num" id="statVisible">9</div>
+                    <div class="stat-label">折叠后可见项（含首页）</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num" id="statL1">8</div>
+                    <div class="stat-label">L1 父菜单（业务域）</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num" id="statL2">30</div>
+                    <div class="stat-label">L2 模块节点</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num" id="statL3">71</div>
+                    <div class="stat-label">L3 页面节点</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">当前选中</div>
+                <div class="panel-body">
+                    <div class="breadcrumb" id="breadcrumb">首页</div>
+                    <div class="page-title" id="pageTitle">首页</div>
+                    <p id="pageDesc" style="font-size:13px;color:#8c8c8c;line-height:1.7;">
+                        点击左侧菜单探索 v3.6 信息架构。节点 <code>origin</code> 字段标注原菜单映射。
+                    </p>
+                    <p id="pageOrigin" style="font-size:12px;color:#bfbfbf;margin-top:8px;"></p>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">完整业务树（v3.6 定稿）</div>
+                <div class="panel-body">
+                    <pre class="tree-pre" id="businessTree"></pre>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">文案对比（现网 → v3.6）· 子菜单悬停可查看原名</div>
+                <div class="panel-body" style="padding:0;overflow-x:auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>层级</th>
+                                <th>现网（原）</th>
+                                <th>v3.6（新）</th>
+                                <th>变更类型</th>
+                            </tr>
+                        </thead>
+                        <tbody id="copyCompareTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">完整映射表（原菜单 → 新结构）</div>
+                <div class="panel-body" style="padding:0;overflow-x:auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>原菜单</th>
+                                <th>新父菜单</th>
+                                <th>新名称</th>
+                                <th>层级</th>
+                                <th>备注</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mappingTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot dot-l1"></div> L1 父菜单 #001529</div>
+                <div class="legend-item"><div class="legend-dot dot-l2"></div> L2 职能模块</div>
+                <div class="legend-item"><div class="legend-dot dot-l3"></div> L3 页面 / 叶子</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const MENU_TREE = [
+  {
+    "id": "home",
+    "label": "首页",
+    "icon": "🏠",
+    "home": true
+  },
+  {
+    "id": "customer",
+    "label": "客户中心",
+    "icon": "👥",
+    "children": [
+      {
+        "label": "客户档案",
+        "origin": "原「客户管理」",
+        "children": [
+          {
+            "label": "客户查询"
+          },
+          {
+            "label": "客户文件"
+          },
+          {
+            "label": "文件设置"
+          }
+        ]
+      },
+      {
+        "label": "开户办理",
+        "origin": "原「开户管理」",
+        "children": [
+          {
+            "label": "开户概览"
+          },
+          {
+            "label": "线上开户"
+          },
+          {
+            "label": "线下开户"
+          },
+          {
+            "label": "线下开户-联名"
+          },
+          {
+            "label": "线下开户-企业"
+          },
+          {
+            "label": "线下开户-机构"
+          },
+          {
+            "label": "线下开户-子账户"
+          }
+        ]
+      },
+      {
+        "label": "专业投资者",
+        "origin": "原「PI管理」",
+        "children": [
+          {
+            "label": "PI认证"
+          },
+          {
+            "label": "PI审核"
+          }
+        ]
+      },
+      {
+        "label": "尽职调查",
+        "origin": "原「问卷管理」",
+        "children": [
+          {
+            "label": "风险问卷"
+          },
+          {
+            "label": "风险问卷审核"
+          }
+        ]
+      },
+      {
+        "label": "客户换汇",
+        "origin": "原「换汇管理」",
+        "children": [
+          {
+            "label": "外汇录入"
+          },
+          {
+            "label": "外汇审核"
+          },
+          {
+            "label": "换汇设置"
+          },
+          {
+            "label": "换汇申请"
+          },
+          {
+            "label": "每日轧差"
+          },
+          {
+            "label": "报表导出"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "lpoa",
+    "label": "LPOA中心",
+    "icon": "📋",
+    "children": [
+      {
+        "label": "LPOA绑定",
+        "origin": "原「LPOA管理」；后期可加「文件存储」",
+        "leaf": true
+      }
+    ]
+  },
+  {
+    "id": "product",
+    "label": "产品中心",
+    "icon": "📦",
+    "children": [
+      {
+        "label": "结构化产品",
+        "origin": "原「结构化产品」",
+        "children": [
+          {
+            "label": "询价记录"
+          },
+          {
+            "label": "订单概览"
+          },
+          {
+            "label": "拼单记录"
+          },
+          {
+            "label": "订单办理"
+          },
+          {
+            "label": "下单设置"
+          },
+          {
+            "label": "操作记录"
+          }
+        ]
+      },
+      {
+        "label": "持仓存续",
+        "origin": "原持仓存续（原子树）",
+        "children": [
+          {
+            "label": "列表页"
+          },
+          {
+            "label": "消息通知"
+          },
+          {
+            "label": "Fixing notice"
+          },
+          {
+            "label": "审核中心"
+          },
+          {
+            "label": "导入自动交割"
+          },
+          {
+            "label": "派息统计"
+          },
+          {
+            "label": "应收未收"
+          }
+        ]
+      },
+      {
+        "label": "OTC产品",
+        "origin": "原「OTC产品」",
+        "children": [
+          {
+            "label": "OTC持仓"
+          }
+        ]
+      },
+      {
+        "label": "期权",
+        "origin": "原「期权」",
+        "children": [
+          {
+            "label": "询价记录"
+          }
+        ]
+      },
+      {
+        "label": "基金",
+        "origin": "原「基金管理」",
+        "children": [
+          {
+            "label": "基金设置"
+          },
+          {
+            "label": "基金审核"
+          }
+        ]
+      },
+      {
+        "label": "债券",
+        "origin": "原「债券管理」",
+        "children": [
+          {
+            "label": "订单记录"
+          },
+          {
+            "label": "产品库"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cutoff",
+    "label": "截单与限额",
+    "icon": "📅",
+    "children": [
+      {
+        "label": "美股截单",
+        "origin": "邮件上手单接单与状态更新",
+        "leaf": true
+      },
+      {
+        "label": "交易限额",
+        "origin": "原「交易管理」",
+        "leaf": true
+      },
+      {
+        "label": "限额审核",
+        "origin": "原「交易管理」",
+        "leaf": true
+      }
+    ]
+  },
+  {
+    "id": "cash",
+    "label": "客户出入金",
+    "icon": "💴",
+    "children": [
+      {
+        "label": "入金",
+        "origin": "原「入金管理」",
+        "children": [
+          {
+            "label": "入金概览"
+          },
+          {
+            "label": "eDDA授权记录"
+          },
+          {
+            "label": "入金设置"
+          }
+        ]
+      },
+      {
+        "label": "出金",
+        "origin": "原「出金管理」",
+        "children": [
+          {
+            "label": "出金概览"
+          },
+          {
+            "label": "大额设置"
+          },
+          {
+            "label": "出金记录"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "custody",
+    "label": "托管费交收",
+    "icon": "🏦",
+    "children": [
+      {
+        "label": "托管费统计",
+        "origin": "原「托管费统计」",
+        "children": [
+          {
+            "label": "交易导入"
+          },
+          {
+            "label": "托管费"
+          },
+          {
+            "label": "年率配置"
+          }
+        ]
+      },
+      {
+        "label": "交收对账",
+        "origin": "原「结算管理」",
+        "children": [
+          {
+            "label": "T+2交收数据"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "immigrant",
+    "label": "投资移民",
+    "icon": "🎯",
+    "children": [
+      {
+        "label": "应提醒客户",
+        "origin": "原「投资移民管理」",
+        "leaf": true
+      },
+      {
+        "label": "订单记录",
+        "origin": "原「投资移民管理」；投资移民客户股票订单，不改名",
+        "leaf": true
+      },
+      {
+        "label": "提醒记录",
+        "origin": "原「投资移民管理」",
+        "leaf": true
+      },
+      {
+        "label": "取消提醒",
+        "origin": "原「投资移民管理」",
+        "leaf": true
+      },
+      {
+        "label": "结单",
+        "origin": "原「投资移民管理」",
+        "leaf": true
+      },
+      {
+        "label": "费用",
+        "origin": "原「投资移民管理」",
+        "leaf": true
+      }
+    ]
+  },
+  {
+    "id": "platform",
+    "label": "平台设置",
+    "icon": "⚙️",
+    "children": [
+      {
+        "label": "系统设置",
+        "origin": "原「系统管理」",
+        "children": [
+          {
+            "label": "字典配置"
+          },
+          {
+            "label": "菜单配置"
+          },
+          {
+            "label": "系统参数"
+          },
+          {
+            "label": "系统日志"
+          }
+        ]
+      },
+      {
+        "label": "权限配置",
+        "origin": "原「权限管理」",
+        "children": [
+          {
+            "label": "员工账号"
+          },
+          {
+            "label": "角色权限"
+          }
+        ]
+      },
+      {
+        "label": "流程配置",
+        "origin": "原「工作流管理」",
+        "children": [
+          {
+            "label": "流程设计"
+          },
+          {
+            "label": "业务树配置"
+          }
+        ]
+      },
+      {
+        "label": "业务配置",
+        "origin": "原「配置管理」",
+        "children": [
+          {
+            "label": "发行商配置"
+          },
+          {
+            "label": "拼单配置"
+          },
+          {
+            "label": "询价笔数配置"
+          },
+          {
+            "label": "佣金配置"
+          },
+          {
+            "label": "交收表格配置"
+          },
+          {
+            "label": "记账佣金配置"
+          }
+        ]
+      },
+      {
+        "label": "日志与审计",
+        "origin": "原「记录管理」",
+        "children": [
+          {
+            "label": "行情提示记录"
+          },
+          {
+            "label": "金马号注销记录"
+          },
+          {
+            "label": "注销交易账号记录"
+          },
+          {
+            "label": "操作记录"
+          },
+          {
+            "label": "评估问卷记录"
+          },
+          {
+            "label": "2FA记录"
+          },
+          {
+            "label": "APP登录记录"
+          },
+          {
+            "label": "LPOA号操作记录"
+          }
+        ]
+      }
+    ]
+  }
+];
+
+    const BUSINESS_TREE_TEXT = "首页\n\n客户中心\n├── 客户档案          → 客户查询 | 客户文件 | 文件设置        [原 客户管理]\n├── 开户办理          → 开户概览 | 线上开户 | 线下开户 | 线下开户-联名 | 线下开户-企业 | 线下开户-机构 | 线下开户-子账户\n├── 专业投资者        → PI认证 | PI审核                        [原 PI管理]\n├── 尽职调查          → 风险问卷 | 风险问卷审核                  [原 问卷管理]\n└── 客户换汇          → 外汇录入 | 外汇审核 | 换汇设置 | 换汇申请 | 每日轧差 | 报表导出  [原 换汇管理]\n\nLPOA中心\n└── LPOA绑定          [原 LPOA管理；后期可加 文件存储]\n\n产品中心\n├── 结构化产品        → 询价记录 | 订单概览 | 拼单记录 | 订单办理 | 下单设置 | 操作记录\n├── 持仓存续          → 列表页 | 消息通知 | Fixing notice | 审核中心 | 导入自动交割 | 派息统计 | 应收未收\n├── OTC产品           → OTC持仓\n├── 期权              → 询价记录\n├── 基金              → 基金设置 | 基金审核                    [原 基金管理]\n└── 债券              → 订单记录 | 产品库                      [原 债券管理]\n\n截单与限额\n├── 美股截单          [邮件上手单接单与状态更新]\n├── 交易限额          [原 交易管理]\n└── 限额审核          [原 交易管理]\n\n客户出入金\n├── 入金              → 入金概览 | eDDA授权记录 | 入金设置\n└── 出金              → 出金概览 | 大额设置 | 出金记录\n\n托管费交收\n├── 托管费统计        → 交易导入 | 托管费 | 年率配置\n└── 交收对账          → T+2交收数据                            [原 结算管理]\n\n投资移民\n├── 应提醒客户 | 订单记录 | 提醒记录 | 取消提醒 | 结单 | 费用\n    （订单记录 = 投资移民客户股票订单，不改名）\n\n平台设置\n├── 系统设置          → 字典配置 | 菜单配置 | 系统参数 | 系统日志   [原 系统管理]\n├── 权限配置          → 员工账号 | 角色权限                        [原 权限管理]\n├── 流程配置          → 流程设计 | 业务树配置                      [原 工作流管理]\n├── 业务配置          → 发行商配置 | 拼单配置 | 询价笔数配置 | 佣金配置 | 交收表格配置 | 记账佣金配置\n└── 日志与审计        → 行情提示记录 | 金马号注销记录 | 注销交易账号记录 | 操作记录 | 评估问卷记录 | 2FA记录 | APP登录记录 | LPOA号操作记录";
+
+    const MAPPING = [
+  [
+    "首页",
+    "—",
+    "首页",
+    "L0",
+    ""
+  ],
+  [
+    "客户管理",
+    "客户中心",
+    "客户档案",
+    "L2",
+    "客户查询 / 客户文件 / 文件设置"
+  ],
+  [
+    "开户管理",
+    "客户中心",
+    "开户办理",
+    "L2",
+    "7 项开户子页"
+  ],
+  [
+    "PI管理",
+    "客户中心",
+    "专业投资者",
+    "L2",
+    "PI认证 / PI审核"
+  ],
+  [
+    "问卷管理",
+    "客户中心",
+    "尽职调查",
+    "L2",
+    "风险问卷 / 风险问卷审核"
+  ],
+  [
+    "换汇管理",
+    "客户中心",
+    "客户换汇",
+    "L2",
+    "6 项换汇子页"
+  ],
+  [
+    "LPOA管理",
+    "LPOA中心",
+    "LPOA绑定",
+    "L2",
+    ""
+  ],
+  [
+    "结构化产品",
+    "产品中心",
+    "结构化产品",
+    "L2",
+    "6 项"
+  ],
+  [
+    "持仓存续（原子树）",
+    "产品中心",
+    "持仓存续",
+    "L2",
+    "7 项"
+  ],
+  [
+    "OTC产品",
+    "产品中心",
+    "OTC产品",
+    "L2",
+    "OTC持仓"
+  ],
+  [
+    "期权",
+    "产品中心",
+    "期权",
+    "L2",
+    "询价记录"
+  ],
+  [
+    "基金管理",
+    "产品中心",
+    "基金",
+    "L2",
+    "基金设置 / 基金审核"
+  ],
+  [
+    "债券管理",
+    "产品中心",
+    "债券",
+    "L2",
+    "订单记录 / 产品库"
+  ],
+  [
+    "美股截单",
+    "截单与限额",
+    "美股截单",
+    "L2",
+    ""
+  ],
+  [
+    "交易管理",
+    "截单与限额",
+    "交易限额 / 限额审核",
+    "L2",
+    "拆为两项"
+  ],
+  [
+    "入金管理",
+    "客户出入金",
+    "入金",
+    "L2",
+    "3 项"
+  ],
+  [
+    "出金管理",
+    "客户出入金",
+    "出金",
+    "L2",
+    "3 项"
+  ],
+  [
+    "托管费统计",
+    "托管费交收",
+    "托管费统计",
+    "L2",
+    "3 项"
+  ],
+  [
+    "结算管理",
+    "托管费交收",
+    "交收对账",
+    "L2",
+    "T+2交收数据"
+  ],
+  [
+    "投资移民管理",
+    "投资移民",
+    "6 项 L2 叶子",
+    "L1域",
+    "含订单记录"
+  ],
+  [
+    "系统管理",
+    "平台设置",
+    "系统设置",
+    "L2",
+    "4 项"
+  ],
+  [
+    "权限管理",
+    "平台设置",
+    "权限配置",
+    "L2",
+    "2 项"
+  ],
+  [
+    "工作流管理",
+    "平台设置",
+    "流程配置",
+    "L2",
+    "2 项"
+  ],
+  [
+    "配置管理",
+    "平台设置",
+    "业务配置",
+    "L2",
+    "6 项"
+  ],
+  [
+    "记录管理",
+    "平台设置",
+    "日志与审计",
+    "L2",
+    "8 条记录"
+  ]
+];
+
+    function slug(s) {
+        return String(s).replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fff-]/g, '');
+    }
+
+    /** 路径 key：L1>L2 或 L1>L2>L3；text 为现网名称（仅子菜单） */
+    const OLD_LABEL_LOOKUP = {
+        '客户中心>客户档案': { text: '客户管理', type: 'rename' },
+        '客户中心>开户办理': { text: '开户管理', type: 'rename' },
+        '客户中心>专业投资者': { text: 'PI管理', type: 'rename' },
+        '客户中心>尽职调查': { text: '问卷管理', type: 'rename' },
+        '客户中心>客户换汇': { text: '换汇管理', type: 'rename' },
+        'LPOA中心>LPOA绑定': { text: 'LPOA管理', type: 'rename' },
+        '产品中心>持仓存续': { text: '结构化产品 → 持仓存续（子树）', type: 'reparent', hint: '提升为同级 L2' },
+        '产品中心>基金': { text: '基金管理', type: 'rename' },
+        '产品中心>债券': { text: '债券管理', type: 'rename' },
+        '截单与限额>交易限额': { text: '交易管理', type: 'reparent', hint: '原二级子页' },
+        '截单与限额>限额审核': { text: '交易管理', type: 'reparent', hint: '原二级子页' },
+        '客户出入金>入金': { text: '入金管理', type: 'rename' },
+        '客户出入金>出金': { text: '出金管理', type: 'rename' },
+        '托管费交收>交收对账': { text: '结算管理', type: 'rename' },
+        '平台设置>系统设置': { text: '系统管理', type: 'rename' },
+        '平台设置>权限配置': { text: '权限管理', type: 'rename' },
+        '平台设置>流程配置': { text: '工作流管理', type: 'rename' },
+        '平台设置>业务配置': { text: '配置管理', type: 'rename' },
+        '平台设置>日志与审计': { text: '记录管理', type: 'rename' },
+        '平台设置>系统设置>字典配置': { text: '字典管理', type: 'alias' },
+        '平台设置>系统设置>菜单配置': { text: '菜单管理', type: 'alias' },
+        '平台设置>权限配置>员工账号': { text: '员工管理', type: 'alias' },
+        '平台设置>权限配置>角色权限': { text: '角色管理', type: 'alias' },
+        '平台设置>流程配置>业务树配置': { text: '业务树管理', type: 'alias' }
+    };
+
+    const COPY_COMPARE_ROWS = [
+        ['L1', '（无，新增）', '客户中心', '合并', '原：客户/开户/PI/问卷/换汇 五个一级'],
+        ['L2', '客户管理', '客户档案', '改名', ''],
+        ['L2', '开户管理', '开户办理', '改名', ''],
+        ['L2', 'PI管理', '专业投资者', '改名', ''],
+        ['L2', '问卷管理', '尽职调查', '改名', ''],
+        ['L2', '换汇管理', '客户换汇', '改名', ''],
+        ['L1', 'LPOA管理', 'LPOA中心', '合并+父菜单', 'L2：LPOA绑定'],
+        ['L2', 'LPOA管理', 'LPOA绑定', '改名', ''],
+        ['L1', '（无，新增）', '产品中心', '合并', '原：结构化/OTC/期权/基金/债券'],
+        ['L2', '基金管理', '基金', '改名', ''],
+        ['L2', '债券管理', '债券', '改名', ''],
+        ['L2', '结构化产品>持仓存续', '产品中心>持仓存续', '层级提升', '名称不变'],
+        ['L1', '（无，新增）', '截单与限额', '合并', '原：美股截单、交易管理'],
+        ['L2', '交易管理', '交易限额 / 限额审核', '拆为 L2', '名称不变'],
+        ['L1', '（无，新增）', '客户出入金', '合并', '原：入金管理、出金管理'],
+        ['L2', '入金管理', '入金', '简称', ''],
+        ['L2', '出金管理', '出金', '简称', ''],
+        ['L1', '（无，新增）', '托管费交收', '合并', '原：托管费统计、结算管理'],
+        ['L2', '结算管理', '交收对账', '改名', 'L3：T+2交收数据'],
+        ['L1', '投资移民管理', '投资移民', '改名', ''],
+        ['L1', '（无，新增）', '平台设置', '合并', '原：系统/权限/工作流/配置/记录'],
+        ['L2', '系统管理', '系统设置', '改名', ''],
+        ['L2', '权限管理', '权限配置', '改名', ''],
+        ['L2', '工作流管理', '流程配置', '改名', ''],
+        ['L2', '配置管理', '业务配置', '改名', ''],
+        ['L2', '记录管理', '日志与审计', '改名', ''],
+        ['L3', '字典管理', '字典配置', '显示别名', '路由可不变'],
+        ['L3', '菜单管理', '菜单配置', '显示别名', ''],
+        ['L3', '员工管理', '员工账号', '显示别名', ''],
+        ['L3', '角色管理', '角色权限', '显示别名', ''],
+        ['L3', '业务树管理', '业务树配置', '显示别名', ''],
+        ['L2', '投资移民管理>订单记录', '投资移民>订单记录', '不变', '移民客户股票订单']
+    ];
+
+    function pathKey(segments) {
+        return segments.filter(s => s && s !== '首页').join('>');
+    }
+
+    function getOldMeta(segments) {
+        return OLD_LABEL_LOOKUP[pathKey(segments)] || null;
+    }
+
+    function hideOriginFloat() {
+        document.getElementById('originFloat').style.display = 'none';
+    }
+
+    function showOriginFloat(anchorEl, segments, currentLabel) {
+        const meta = getOldMeta(segments);
+        if (!meta) return;
+        const box = document.getElementById('originFloat');
+        const typeLabel = {
+            rename: '改名',
+            merge: '合并自',
+            reparent: '原归属',
+            alias: '显示别名（现网）'
+        }[meta.type] || '原菜单';
+
+        let body = meta.text;
+        if (meta.hint) body += `（${meta.hint}）`;
+
+        box.innerHTML = `<strong>${typeLabel}</strong>${body}<div class="new-name">现用名：${currentLabel || segments[segments.length - 1]}</div>`;
+        const rect = anchorEl.getBoundingClientRect();
+        let left = rect.right + 8;
+        let top = rect.top + rect.height / 2 - 20;
+        if (left + 280 > window.innerWidth) left = rect.left - 288;
+        if (top < 8) top = 8;
+        if (top + 80 > window.innerHeight) top = window.innerHeight - 88;
+        box.style.left = left + 'px';
+        box.style.top = top + 'px';
+        box.style.display = 'block';
+    }
+
+    function bindOriginHover(el, segments, currentLabel) {
+        if (!getOldMeta(segments)) return;
+        el.addEventListener('mouseenter', () => showOriginFloat(el, segments, currentLabel));
+        el.addEventListener('mouseleave', hideOriginFloat);
+    }
+
+    function renderCopyCompare() {
+        const tbody = document.getElementById('copyCompareTable');
+        if (!tbody) return;
+        COPY_COMPARE_ROWS.forEach(([level, oldName, newName, type, note]) => {
+            const tr = document.createElement('tr');
+            const tagClass = type === '改名' || type === '简称' ? 'tag-rename'
+                : type === '显示别名' ? 'tag-alias'
+                : type === '不变' ? 'tag-same' : 'tag-merge';
+            tr.dataset.newName = newName;
+            tr.innerHTML = `<td>${level}</td><td>${oldName}</td><td>${newName}</td><td><span class="tag ${tagClass}">${type}</span></td>`;
+            if (note) tr.title = note;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderSidebar() {
+        const nav = document.getElementById('navMenu');
+        nav.innerHTML = '';
+
+        MENU_TREE.forEach((node, idx) => {
+            if (node.home) {
+                const el = document.createElement('div');
+                el.className = 'nav-item active';
+                el.dataset.path = '首页';
+                el.innerHTML = `<span class="nav-icon">${node.icon || '🏠'}</span><span>${node.label}</span>`;
+                el.addEventListener('click', () => selectPath(['首页'], null, '', el));
+                nav.appendChild(el);
+                const div = document.createElement('div');
+                div.className = 'nav-divider';
+                nav.appendChild(div);
+                return;
+            }
+
+            const parent = document.createElement('div');
+            parent.className = 'nav-item nav-parent';
+            parent.dataset.parent = node.id;
+            parent.innerHTML = `
+                <span class="nav-icon">${node.icon || '•'}</span>
+                <span>${node.label}</span>
+                <span class="nav-arrow">›</span>`;
+            parent.addEventListener('click', () => toggleParent(parent, node.id));
+            nav.appendChild(parent);
+
+            const sub = document.createElement('div');
+            sub.className = 'nav-sub-menu';
+            sub.dataset.group = node.id;
+
+            (node.children || []).forEach((l2, j) => {
+                const l2Id = `${node.id}-l2-${j}`;
+                const hasL3 = l2.children && l2.children.length && !l2.leaf;
+                if (hasL3) {
+                    const l2El = document.createElement('div');
+                    l2El.className = 'nav-item';
+                    l2El.dataset.l2 = l2Id;
+                    l2El.innerHTML = `<span>${l2.label}</span><span class="nav-arrow" style="margin-left:auto">›</span>`;
+                    bindOriginHover(l2El, [node.label, l2.label], l2.label);
+                    l2El.addEventListener('click', (e) => toggleL2(l2El, l2Id, e));
+                    sub.appendChild(l2El);
+
+                    const l3Wrap = document.createElement('div');
+                    l3Wrap.className = 'nav-sub-menu-l3';
+                    l3Wrap.dataset.group = l2Id;
+                    l2.children.forEach((l3) => {
+                        const label = typeof l3 === 'string' ? l3 : l3.label;
+                        const l3El = document.createElement('div');
+                        l3El.className = 'nav-item';
+                        l3El.textContent = label;
+                        const l3Path = [node.label, l2.label, label];
+                        bindOriginHover(l3El, l3Path, label);
+                        const origin = l2.origin || (typeof l3 === 'object' && l3.origin) || '';
+                        l3El.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            selectPath(l3Path, l2.origin, origin, l3El);
+                        });
+                        l3Wrap.appendChild(l3El);
+                    });
+                    sub.appendChild(l3Wrap);
+                } else {
+                    const l2El = document.createElement('div');
+                    l2El.className = 'nav-item';
+                    l2El.textContent = l2.label;
+                    const l2Path = [node.label, l2.label];
+                    bindOriginHover(l2El, l2Path, l2.label);
+                    l2El.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        selectPath(l2Path, l2.origin, l2.origin || '', l2El);
+                    });
+                    sub.appendChild(l2El);
+                }
+            });
+            nav.appendChild(sub);
+        });
+    }
+
+    function toggleParent(el, groupId) {
+        const sub = document.querySelector(`.nav-sub-menu[data-group="${groupId}"]`);
+        const arrow = el.querySelector('.nav-arrow');
+        const isOpen = sub && sub.classList.contains('open');
+
+        document.querySelectorAll('.nav-sub-menu.open').forEach(s => {
+            if (s !== sub) {
+                s.classList.remove('open');
+                const gid = s.dataset.group;
+                const p = document.querySelector(`.nav-parent[data-parent="${gid}"]`);
+                if (p) {
+                    p.classList.remove('open');
+                    p.querySelector('.nav-arrow')?.classList.remove('open');
+                }
+            }
+        });
+        document.querySelectorAll('.nav-sub-menu-l3.open').forEach(s => s.classList.remove('open'));
+
+        if (!sub) return;
+        if (isOpen) {
+            sub.classList.remove('open');
+            el.classList.remove('open');
+            arrow.classList.remove('open');
+        } else {
+            sub.classList.add('open');
+            el.classList.add('open');
+            arrow.classList.add('open');
+        }
+    }
+
+    function toggleL2(el, groupId, event) {
+        event.stopPropagation();
+        const sub = document.querySelector(`.nav-sub-menu-l3[data-group="${groupId}"]`);
+        const arrow = el.querySelector('.nav-arrow');
+        const isOpen = sub && sub.classList.contains('open');
+
+        document.querySelectorAll('.nav-sub-menu-l3.open').forEach(s => {
+            if (s !== sub) {
+                s.classList.remove('open');
+                s.previousElementSibling?.querySelector?.('.nav-arrow')?.classList.remove('open');
+            }
+        });
+
+        if (!sub) return;
+        if (isOpen) {
+            sub.classList.remove('open');
+            arrow.classList.remove('open');
+        } else {
+            sub.classList.add('open');
+            arrow.classList.add('open');
+        }
+    }
+
+
+    function selectPath(segments, l2Origin, extraOrigin, activeEl) {
+        document.querySelectorAll('.nav-item.active').forEach(i => i.classList.remove('active'));
+        if (activeEl) activeEl.classList.add('active');
+
+        const bc = document.getElementById('breadcrumb');
+        const title = document.getElementById('pageTitle');
+        const desc = document.getElementById('pageDesc');
+        const orig = document.getElementById('pageOrigin');
+
+        if (segments.length === 1 && segments[0] === '首页') {
+            bc.textContent = '首页';
+            title.textContent = '首页';
+            desc.textContent = '工作台概览。折叠状态下侧边栏显示 9 项（首页 + 8 个 L1 父菜单）。';
+            orig.textContent = '';
+            highlightMapping('首页');
+            return;
+        }
+
+        bc.innerHTML = segments.map(s => `<span>${s}</span>`).join(' <span>›</span> ');
+        title.textContent = segments[segments.length - 1];
+        desc.textContent = `路径：${segments.join(' → ')}`;
+        const parts = [];
+        if (l2Origin) parts.push(l2Origin);
+        if (extraOrigin && extraOrigin !== l2Origin) parts.push(extraOrigin);
+        orig.textContent = parts.length ? `原菜单映射：${parts.join('；')}` : '';
+        highlightMapping(segments[0], segments[1]);
+        highlightCopyCompare(segments);
+    }
+
+    function highlightCopyCompare(segments) {
+        const leaf = segments[segments.length - 1];
+        document.querySelectorAll('#copyCompareTable tr').forEach(tr => {
+            tr.style.background = '';
+            const newName = tr.dataset.newName || '';
+            if (newName && (newName === leaf || newName.includes(leaf))) {
+                tr.style.background = '#e6f7ff';
+            }
+        });
+    }
+
+    function renderMapping() {
+        const tbody = document.getElementById('mappingTable');
+        MAPPING.forEach(([oldName, parent, child, level, note]) => {
+            const tr = document.createElement('tr');
+            let tagClass = 'tag-blue';
+            if (level === 'L0') tagClass = 'tag-green';
+            else if (level === 'L1域' || level === 'L2') tagClass = 'tag-green';
+            tr.innerHTML = `
+                <td>${oldName}</td>
+                <td><span class="tag tag-green">${parent}</span></td>
+                <td>${child}</td>
+                <td><span class="tag ${tagClass}">${level}</span></td>
+                <td style="font-size:12px;color:#8c8c8c">${note || ''}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function highlightMapping(l1, l2) {
+        document.querySelectorAll('#mappingTable tr').forEach(tr => {
+            tr.style.background = '';
+            const cells = tr.querySelectorAll('td');
+            if (!cells.length) return;
+            const old = cells[0].textContent.trim();
+            const parent = cells[1].textContent.trim();
+            if (l1 === '首页' && old === '首页') tr.style.background = '#e6f7ff';
+            else if (l2 && parent === l1 && (cells[2].textContent.includes(l2) || cells[2].textContent.trim() === l2)) {
+                tr.style.background = '#e6f7ff';
+            }
+            else if (!l2 && parent === l1) tr.style.background = '#e6f7ff';
+        });
+    }
+
+    document.getElementById('businessTree').textContent = BUSINESS_TREE_TEXT;
+
+    renderSidebar();
+    renderMapping();
+    renderCopyCompare();
+</script>
+</body>
+</html>
