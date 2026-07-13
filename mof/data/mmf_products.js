@@ -253,7 +253,9 @@ const MMF_PRODUCTS = [
     nav: 1.0842, nav_date: '2026-06-28', fund_size: '1,200 百万美元',
     updated_by: '李运营', updated_at: '2026-06-28',
     product_id: 'FUND:HK0000654321', broker_id: 'CIS-KGI', broker_name: 'CIS-KGI',
-    launch_date: '2019-05-10', trustee: '汇丰信托'
+    launch_date: '2019-05-10', trustee: '汇丰信托',
+    website_url: 'https://hk.taikangasset.cn/en/product_service/productService.html',
+    fund_category_type: 'MMF', subscription_status: 'open'
   },
   {
     fund_internal_code: 'TK-HKD-MMF', product_code: 'HK0000288743', default_isin: 'HK0000288743',

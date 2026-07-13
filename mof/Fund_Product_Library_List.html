@@ -522,11 +522,11 @@ tr.data-row:hover{background:#fafafa}
   </div>
 </div>
 
-<script src="data/mof_sidebar.js?v=20260713c"></script>
-<script src="data/mmf_products.js?v=20260713c"></script>
-<script src="data/pingan_pammf.js?v=20260713c"></script>
-<script src="data/fund_house_publishers.js?v=20260713c"></script>
-<script src="data/mof_common.js?v=20260713c"></script>
+<script src="data/mof_sidebar.js?v=20260713d"></script>
+<script src="data/mmf_products.js?v=20260713d"></script>
+<script src="data/pingan_pammf.js?v=20260713d"></script>
+<script src="data/fund_house_publishers.js?v=20260713d"></script>
+<script src="data/mof_common.js?v=20260713d"></script>
 <script>
 function i18nFieldList() {
   return (typeof PRODUCT_I18N_FIELDS !== 'undefined' && Array.isArray(PRODUCT_I18N_FIELDS) && PRODUCT_I18N_FIELDS.length)
@@ -1905,6 +1905,8 @@ function scrapePublicData() {
   const failMsg = '抓取失败，请检查配置或稍后重试；如持续失败，请联系开发处理';
   // 原型失败 case：未填 URL，或 URL 含 fail / error / timeout（已填 URL 也可演示失败）
   const forceFail = /fail|error|timeout/i.test(website);
+  // 正常抓取成功 demo：列表第 2 个产品（泰康开泰美元货币基金）
+  const demoSuccessCode = (typeof MMF_PRODUCTS !== 'undefined' && MMF_PRODUCTS[1]?.product_code) || 'HK0000654321';
   showToast('正在抓取官网公共数据…');
   setTimeout(() => {
     if (!website || forceFail) {
@@ -1921,16 +1923,23 @@ function scrapePublicData() {
     if (scrapeEl) { scrapeEl.textContent = txt; scrapeEl.style.display = 'none'; }
     const headerScrape = document.getElementById('headerScrapeTime');
     if (headerScrape) headerScrape.textContent = txt;
-    if (fund?.product_code === 'HK0000720752' && typeof PINGAN_PAMMF !== 'undefined') {
-      fund.fund_size = fund.fund_size || '4,208.9 百万美元 (30/06/2026)';
-      fund.fiscal_year_end = '6月30日';
+    if (fund?.product_code === demoSuccessCode) {
+      fund.fund_size = '1,256.3 百万美元 (30/06/2026)';
+      fund.fiscal_year_end = fund.fiscal_year_end || '12月31日';
+      const sizeEl = document.getElementById('fld_fund_size');
+      if (sizeEl) sizeEl.value = fund.fund_size;
       const mEl = document.getElementById('fld_fiscal_month');
       const dEl = document.getElementById('fld_fiscal_day');
-      if (mEl) mEl.value = '6';
-      if (dEl) dEl.value = '30';
-      document.getElementById('fld_fund_size').value = fund.fund_size;
-      fundDocuments = cloneFundDocuments(fund.fund_documents);
-      renderBrochureDocs();
+      if (mEl && !mEl.value) mEl.value = '12';
+      if (dEl && !dEl.value) dEl.value = '31';
+      if (fund.perf) {
+        fund.perf.m1 = 0.29;
+        fund.perf.y1 = 3.92;
+      }
+      const p1 = document.getElementById('perf_m1');
+      const py1 = document.getElementById('perf_y1');
+      if (p1) p1.value = '0.29';
+      if (py1) py1.value = '3.92';
     }
     updateSectionStatus();
     pushOpLog(`POST /api/mof/funds/${fund?.product_code || ''}/scrape → SUCCESS`, fund?.product_code);
