@@ -65,7 +65,16 @@ body.route-detail .pk-bar{display:none!important}
 /* 筛选 & 货架 */
 .filter-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
 .filter-grid label{display:block;font-size:.72rem;color:#6b7280;margin-bottom:4px}
-.filter-grid select{width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:.8rem}
+.filter-grid select,.filter-grid input{width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:.8rem}
+.filter-actions{display:flex;gap:8px;align-items:flex-end;grid-column:1/-1}
+.filter-actions .btn-reset{padding:6px 14px;border:1px solid #d1d5db;background:#fff;border-radius:6px;font-size:.8rem;cursor:pointer;color:#374151}
+.filter-actions .btn-reset:hover{border-color:#0f766e;color:#0f766e}
+.name-search-wrap{position:relative}
+.name-suggest{position:absolute;left:0;right:0;top:100%;z-index:20;background:#fff;border:1px solid #d1d5db;border-radius:6px;max-height:220px;overflow:auto;box-shadow:0 8px 20px rgba(0,0,0,.08);display:none}
+.name-suggest.show{display:block}
+.name-suggest-item{padding:8px 10px;font-size:.78rem;cursor:pointer}
+.name-suggest-item:hover,.name-suggest-item.active{background:#ecfdf5}
+.name-suggest-item .code{color:#9ca3af;font-size:.68rem;font-family:monospace}
 .shelf-wrap{overflow-x:auto}
 .shelf-table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:1200px}
 .shelf-table th{background:#f9fafb;padding:10px 8px;text-align:left;font-weight:600;color:#374151;border-bottom:2px solid #e5e7eb;white-space:nowrap}
@@ -178,6 +187,11 @@ body.route-detail .pk-bar{display:none!important}
   <header class="topbar">
     <h1>产品甄选 · 基金产品</h1>
     <div class="topbar-right">
+      <div class="lang-switch" id="listLangSwitch">
+        <button type="button" data-lang="zh-CN" class="active">简体</button>
+        <button type="button" data-lang="zh-TW">繁体</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="simulateError"> 模拟接口异常</label>
       <span>实时数据 11:32:00</span>
       <i class="fas fa-bell"></i>
@@ -191,9 +205,17 @@ body.route-detail .pk-bar{display:none!important}
       <div class="section-title"><i class="fas fa-filter" style="color:#0f766e"></i> 筛选</div>
       <div class="filter-grid">
         <div><label>基金风险等级</label><select id="riskFilter"><option value="">全部</option><option value="1">低风险</option><option value="2">中低风险</option><option value="3">中等风险</option><option value="4">中高风险</option><option value="5">高风险</option></select></div>
-        <div><label>基金产品</label><select id="fundFilter"><option value="">全部</option></select></div>
+        <div class="name-search-wrap">
+          <label>基金名称</label>
+          <input type="text" id="fundNameSearch" placeholder="输入关键词模糊搜索" autocomplete="off">
+          <div class="name-suggest" id="fundNameSuggest"></div>
+          <input type="hidden" id="fundFilter" value="">
+        </div>
         <div><label>基金公司</label><select id="houseFilter"><option value="">全部</option></select></div>
-        <div><label>起投资金</label><select id="minFilter"><option value="">不限</option><option value="1">≥1</option><option value="1000">≥1,000</option><option value="10000">≥10,000</option></select></div>
+        <div><label>产品代码</label><input type="text" id="codeFilter" placeholder="输入产品代码"></div>
+        <div class="filter-actions">
+          <button type="button" class="btn-reset" id="resetFiltersBtn">重置</button>
+        </div>
       </div>
     </div>
     <div class="section">
@@ -244,7 +266,7 @@ body.route-detail .pk-bar{display:none!important}
   </div>
 </div>
 
-<script src="data/mmf_products.js?v=20260709e"></script>
+<script src="data/mmf_products.js?v=20260713a"></script>
 <script>
 /* ── Hash Router ── */
 const router = {
@@ -322,10 +344,15 @@ function renderBanner() {
   const banners = getActiveBanners();
   if (!banners.length) { el.innerHTML = ''; return; }
   el.innerHTML = `<div class="banner-section">
-    <div class="banner-track" id="bannerTrack">${banners.map(b => `
-      <div class="banner-slide" style="background:${b.gradient}">
-        <h2>${b.title}</h2><p>${b.subtitle}</p>
-      </div>`).join('')}</div>
+    <div class="banner-track" id="bannerTrack">${banners.map(b => {
+      const img = b.image_i18n?.[uiLang] || b.image_i18n?.['zh-CN'] || b.image_url || '';
+      const bg = img
+        ? `linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('${img}') center/cover`
+        : b.gradient;
+      return `<div class="banner-slide" style="background:${bg}">
+        <h2>${b.title}</h2>
+      </div>`;
+    }).join('')}</div>
     <div class="banner-dots">${banners.map((_,i)=>`<span class="banner-dot ${i===0?'active':''}" onclick="goBanner(${i})"></span>`).join('')}</div>
   </div>`;
   clearInterval(bannerTimer);
@@ -340,7 +367,14 @@ function goBanner(i) {
 }
 
 function featuredCardName(f) {
-  return f.featured_name || f.product_name;
+  return localizedFundName(f) || f.featured_name || f.product_name;
+}
+
+function localizedFundName(f) {
+  if (!f) return '';
+  if (f.i18n?.product_name?.[uiLang]) return f.i18n.product_name[uiLang];
+  if (uiLang === 'zh-CN') return f.product_name || '';
+  return f.i18n?.product_name?.['zh-CN'] || f.product_name || '';
 }
 
 function showTradeToast(code) {
@@ -411,14 +445,16 @@ function getFiltered() {
   const risk = document.getElementById('riskFilter').value;
   const fund = document.getElementById('fundFilter').value;
   const house = document.getElementById('houseFilter').value;
-  const min = document.getElementById('minFilter').value;
+  const codeQ = (document.getElementById('codeFilter')?.value || '').trim().toLowerCase();
+  const nameQ = (document.getElementById('fundNameSearch')?.value || '').trim().toLowerCase();
   return getListedFunds().filter(f => {
     if (risk && String(f.fund_inv_risk_level) !== risk) return false;
     if (fund && f.product_code !== fund) return false;
-    if (house && f.fund_house_id !== house) return false;
-    if (min && f.min_sub_initamount < parseInt(min,10)) return false;
+    if (house && f.fund_house_id !== house && f.fund_house_name !== house) return false;
+    if (codeQ && !(f.product_code || '').toLowerCase().includes(codeQ)) return false;
+    if (nameQ && !localizedFundName(f).toLowerCase().includes(nameQ)) return false;
     return true;
-  }).sort((a,b)=>a.display_order-b.display_order);
+  }).sort((a,b)=>(a.display_order||0)-(b.display_order||0));
 }
 
 function renderShelf() {
@@ -430,12 +466,12 @@ function renderShelf() {
   const data = getFiltered();
   if (!data.length) { wrap.innerHTML = emptyHtml(); return; }
   wrap.innerHTML = `<table class="shelf-table"><thead><tr>
-    <th class="pk-col"></th><th>产品名称</th><th>基金公司</th>
+    <th class="pk-col"></th><th>基金名称</th><th>基金公司</th>
     <th>近1月</th><th>近1年</th><th>份额类别</th><th>货币</th>
     <th>最近净值</th><th>风险等级</th><th>基金类别</th><th>操作</th>
   </tr></thead><tbody>${data.map(f => `<tr>
     <td class="pk-col"><button class="f-btn-compare${pkSelected.has(f.product_code)?' active':''}" style="width:28px;height:28px;font-size:.7rem" title="加入对比" onclick="togglePk('${f.product_code}',null)"><i class="fas fa-balance-scale"></i></button></td>
-    <td><div>${f.product_name}</div><div class="product-code">${f.product_code}</div></td>
+    <td><div>${localizedFundName(f)}</div><div class="product-code">${f.product_code}</div></td>
     <td>${f.fund_house_name}</td>
     <td class="positive"><span class="num-animate" data-num="${f.perf.m1}" data-type="pct">—</span></td>
     <td class="positive"><span class="num-animate" data-num="${f.perf.y1}" data-type="pct">—</span></td>
@@ -470,7 +506,7 @@ function updatePkBar() {
     if (!f) return '';
     return `<div class="pk-mini-card">
       <button class="pk-mini-remove" onclick="removePk('${c}')">×</button>
-      <div class="name">${f.product_name}</div>
+      <div class="name">${localizedFundName(f)}</div>
       <div class="house">${f.fund_house_name}</div>
     </div>`;
   }).join('');
@@ -501,12 +537,50 @@ function closePkModal() { document.getElementById('pkModal').classList.remove('s
 
 function initFilters() {
   const listed = getListedFunds();
-  const fundSel = document.getElementById('fundFilter');
   const houseSel = document.getElementById('houseFilter');
-  listed.forEach(f => { const o=document.createElement('option'); o.value=f.product_code; o.textContent=f.product_name.slice(0,20); fundSel.appendChild(o); });
-  [...new Set(listed.map(f=>f.fund_house_id))].forEach(h => {
-    const o=document.createElement('option'); o.value=h; o.textContent=h; houseSel.appendChild(o);
+  houseSel.innerHTML = '<option value="">全部</option>';
+  [...new Set(listed.map(f => f.fund_house_name || f.fund_house_id).filter(Boolean))].forEach(h => {
+    const o = document.createElement('option');
+    o.value = h;
+    o.textContent = h;
+    houseSel.appendChild(o);
   });
+}
+
+function resetListFilters() {
+  document.getElementById('riskFilter').value = '';
+  document.getElementById('houseFilter').value = '';
+  document.getElementById('codeFilter').value = '';
+  document.getElementById('fundFilter').value = '';
+  document.getElementById('fundNameSearch').value = '';
+  document.getElementById('fundNameSuggest').classList.remove('show');
+  renderShelf();
+  renderFeatured();
+}
+
+function renderNameSuggest() {
+  const box = document.getElementById('fundNameSuggest');
+  const q = (document.getElementById('fundNameSearch').value || '').trim().toLowerCase();
+  if (!q) { box.classList.remove('show'); box.innerHTML = ''; return; }
+  const hits = getListedFunds().filter(f => localizedFundName(f).toLowerCase().includes(q)).slice(0, 8);
+  if (!hits.length) {
+    box.innerHTML = '<div class="name-suggest-item" style="color:#9ca3af;cursor:default">无匹配基金</div>';
+    box.classList.add('show');
+    return;
+  }
+  box.innerHTML = hits.map(f => `
+    <div class="name-suggest-item" data-code="${f.product_code}" data-name="${localizedFundName(f).replace(/"/g,'&quot;')}">
+      <div>${localizedFundName(f)}</div>
+      <div class="code">${f.product_code}</div>
+    </div>`).join('');
+  box.classList.add('show');
+}
+
+function pickFundName(code, name) {
+  document.getElementById('fundFilter').value = code || '';
+  document.getElementById('fundNameSearch').value = name || '';
+  document.getElementById('fundNameSuggest').classList.remove('show');
+  renderShelf();
 }
 
 function renderAll() {
@@ -658,7 +732,7 @@ function renderOverviewBlock(f) {
     investor = '全部';
   }
   return `<div class="ov-grid">
-    ${ovCell('基金产品名称', f.product_name, 2)}
+    ${ovCell('基金名称', localizedFundName(f), 2)}
     ${ovCell('产品代码', f.product_code)}
     ${ovCell('基金公司', f.fund_house_name)}
     ${ovCell('份额类别', f.share_class_label)}
@@ -860,7 +934,7 @@ function renderDetail(f) {
     <div class="card">
       <div class="detail-hero-head">
         <div>
-          <h1>${f.product_name}</h1>
+          <h1>${localizedFundName(f)}</h1>
           <p style="color:#9ca3af;font-size:.8rem;margin-top:4px;font-family:monospace">${f.product_code}</p>
         </div>
         ${tradeBtn('btn-trade btn-trade-lg', f)}
@@ -877,24 +951,54 @@ function renderDetail(f) {
       ${tabs.map((t, i) => `<button type="button" class="detail-tab ${i===0?'active':''}" data-target="${t.id}">${t.label}</button>`).join('')}
     </nav>
     ${sections.join('')}`;
-  document.title = f.product_name + ' - 基金详情';
+  document.title = localizedFundName(f) + ' - 基金详情';
   initDetailTabs(tabs);
   bindChartInteraction('navChart', chartData);
-  document.querySelectorAll('#langSwitch button').forEach(btn => {
+  document.querySelectorAll('#langSwitch button, #listLangSwitch button').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === uiLang);
   });
 }
 
 /* ── Boot ── */
 document.getElementById('simulateError').addEventListener('change', renderAll);
-['riskFilter','fundFilter','houseFilter','minFilter'].forEach(id=>{
-  document.getElementById(id).addEventListener('change', renderShelf);
+['riskFilter','houseFilter'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('change', () => { renderShelf(); renderFeatured(); });
 });
+document.getElementById('codeFilter')?.addEventListener('input', () => { renderShelf(); });
+document.getElementById('fundNameSearch')?.addEventListener('input', () => {
+  document.getElementById('fundFilter').value = '';
+  renderNameSuggest();
+  renderShelf();
+});
+document.getElementById('fundNameSuggest')?.addEventListener('click', e => {
+  const item = e.target.closest('.name-suggest-item[data-code]');
+  if (!item) return;
+  pickFundName(item.dataset.code, item.dataset.name);
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.name-search-wrap')) {
+    document.getElementById('fundNameSuggest')?.classList.remove('show');
+  }
+});
+document.getElementById('resetFiltersBtn')?.addEventListener('click', resetListFilters);
+function syncLangButtons() {
+  document.querySelectorAll('#langSwitch button, #listLangSwitch button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === uiLang);
+  });
+}
 document.getElementById('langSwitch')?.addEventListener('click', e => {
   const btn = e.target.closest('button[data-lang]');
   if (!btn || !currentDetailFund) return;
   uiLang = btn.dataset.lang;
+  syncLangButtons();
   renderDetail(currentDetailFund);
+});
+document.getElementById('listLangSwitch')?.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-lang]');
+  if (!btn) return;
+  uiLang = btn.dataset.lang;
+  syncLangButtons();
+  renderAll();
 });
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof MMF_PRODUCTS === 'undefined') {

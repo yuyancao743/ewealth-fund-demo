@@ -15,7 +15,6 @@ const INVESTOR_RESTRICTION_MAP = {
 };
 
 const FUND_CATEGORY_TYPES = [
-  { id: '', label: '空' },
   { id: 'HEDGE', label: '对冲基金' },
   { id: 'MMF', label: '货币基金' },
   { id: 'BOND', label: '债券基金' },
@@ -25,7 +24,6 @@ const FUND_CATEGORY_TYPES = [
 ];
 
 const SUBSCRIPTION_STATUS_OPTIONS = [
-  { id: '', label: '空', labelZh: '—' },
   { id: 'open', label: 'Open', labelZh: '开放' },
   { id: 'hard closed', label: 'Hard closed', labelZh: '硬关闭' },
   { id: 'soft closed', label: 'Soft closed', labelZh: '软关闭' },
@@ -390,7 +388,12 @@ function getListedFunds() {
 }
 
 function getFeaturedFunds() {
-  return getListedFunds().filter(f => f.is_featured).sort((a, b) => a.display_order - b.display_order);
+  const list = getListedFunds().filter(f => f.is_featured);
+  // 序号越小越靠前；相同序号随机排序；无序号排最后
+  return list
+    .map(f => ({ f, sort: f.featured_sort != null && f.featured_sort !== '' ? Number(f.featured_sort) : Number.POSITIVE_INFINITY, rand: Math.random() }))
+    .sort((a, b) => (a.sort - b.sort) || (a.rand - b.rand))
+    .map(x => x.f);
 }
 
 function getActiveBanners() {

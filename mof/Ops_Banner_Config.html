@@ -116,8 +116,16 @@
         }
         .ewh-banner:hover { transform: scale(1.01); }
         .ewh-banner-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-        .ewh-banner-sub { font-size: 13px; opacity: 0.9; }
         .ewh-banner-cta {
+            font-size: 13px; font-weight: 600; opacity: .95; white-space: nowrap;
+        }
+        .lang-tabs { display: flex; gap: 0; border: 1px solid #d9d9d9; border-radius: 6px; overflow: hidden; margin-bottom: 12px; width: fit-content; }
+        .lang-tabs button { padding: 6px 14px; border: none; background: #fff; cursor: pointer; font-size: 13px; color: #666; border-right: 1px solid #d9d9d9; }
+        .lang-tabs button:last-child { border-right: none; }
+        .lang-tabs button.active { background: #1890ff; color: #fff; font-weight: 600; }
+        .img-upload-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .img-upload-row input[type=text] { flex: 1; min-width: 180px; }
+        .img-preview { width: 120px; height: 56px; border-radius: 6px; background: #f5f5f5; border: 1px dashed #d9d9d9; object-fit: cover; display: none; }
             background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
             padding: 6px 14px; border-radius: 20px; font-size: 12px; white-space: nowrap;
         }
@@ -293,7 +301,7 @@
                             <thead>
                                 <tr>
                                     <th>标题</th>
-                                    <th>副标题</th>
+                                    <th>图片</th>
                                     <th>位置</th>
                                     <th>排序</th>
                                     <th>有效期</th>
@@ -325,7 +333,6 @@
                                 <div class="ewh-banner" id="previewBanner">
                                     <div>
                                         <div class="ewh-banner-title" id="pvTitle">精选货币基金</div>
-                                        <div class="ewh-banner-sub" id="pvSubtitle">稳健收益，灵活申赎，低至 HKD 10,000 起投</div>
                                     </div>
                                     <div class="ewh-banner-cta">了解更多 →</div>
                                 </div>
@@ -358,8 +365,17 @@
                     <input type="text" class="form-input" id="fTitle" placeholder="Banner 主标题">
                 </div>
                 <div class="form-item">
-                    <label class="form-label">副标题</label>
-                    <textarea class="form-textarea" id="fSubtitle" placeholder="副标题文案"></textarea>
+                    <label class="form-label">图片（按语言上传）</label>
+                    <div class="lang-tabs" id="imageLangTabs">
+                        <button type="button" data-lang="zh-CN" class="active">简体</button>
+                        <button type="button" data-lang="zh-TW">繁体</button>
+                        <button type="button" data-lang="en">EN</button>
+                    </div>
+                    <div class="img-upload-row">
+                        <input type="text" class="form-input" id="fImage" placeholder="图片 URL 或本地上传后的路径">
+                        <input type="file" id="fImageFile" accept="image/*" style="font-size:12px;max-width:200px">
+                    </div>
+                    <img class="img-preview" id="fImagePreview" alt="预览">
                 </div>
                 <div class="form-row">
                     <div class="form-item" style="grid-column:1/-1">
@@ -395,10 +411,6 @@
                         <label class="form-label">跳转链接</label>
                         <input type="url" class="form-input" id="fLink" placeholder="https://">
                     </div>
-                </div>
-                <div class="form-item">
-                    <label class="form-label">图片 URL</label>
-                    <input type="url" class="form-input" id="fImage" placeholder="可选，留空使用默认渐变背景">
                 </div>
             </div>
             <div class="modal-footer">
@@ -478,35 +490,35 @@
 
         function buildMockBanners() {
             const base = [
-                { title: '精选货币基金', subtitle: '稳健收益，灵活申赎，低至 USD 1 起投', status: 'ACTIVE', sort_order: 1,
+                { title: '精选货币基金', status: 'ACTIVE', sort_order: 1,
                   valid_from: '2026-01-01T00:00', valid_to: '2026-12-31T23:59', link_url: '#featured' },
-                { title: '美元 MMF 专区', subtitle: '美元计价货币基金，把握美元利率机遇', status: 'ACTIVE', sort_order: 2,
+                { title: '美元 MMF 专区', status: 'ACTIVE', sort_order: 2,
                   valid_from: '2026-03-01T00:00', valid_to: '2026-09-30T23:59', link_url: '#usd-mmf' },
-                { title: '新客专享活动', subtitle: '首次申购指定 MMF 享费率优惠', status: 'INACTIVE', sort_order: 3,
+                { title: '新客专享活动', status: 'INACTIVE', sort_order: 3,
                   valid_from: '2026-08-01T00:00', valid_to: '2026-08-31T23:59', link_url: '#promo' },
-                { title: '平安货币基金上新', subtitle: 'I类美元份额 · 官网业绩同步', status: 'ACTIVE', sort_order: 4,
+                { title: '平安货币基金上新', status: 'ACTIVE', sort_order: 4,
                   valid_from: '2026-06-01T00:00', valid_to: '2026-12-31T23:59', link_url: '#pingan' },
-                { title: '港元货基精选', subtitle: '港元计价，灵活申赎', status: 'ACTIVE', sort_order: 5,
+                { title: '港元货基精选', status: 'ACTIVE', sort_order: 5,
                   valid_from: '2026-02-15T00:00', valid_to: '2026-11-30T23:59', link_url: '#hkd' },
-                { title: '暑期理财季', subtitle: '指定产品申购享优惠', status: 'INACTIVE', sort_order: 6,
+                { title: '暑期理财季', status: 'INACTIVE', sort_order: 6,
                   valid_from: '2026-07-01T00:00', valid_to: '2026-08-31T23:59', link_url: '#summer' },
-                { title: '泰康系列货基', subtitle: '美元 / 港元双币种可选', status: 'INACTIVE', sort_order: 7,
+                { title: '泰康系列货基', status: 'INACTIVE', sort_order: 7,
                   valid_from: '2025-01-01T00:00', valid_to: '2025-12-31T23:59', link_url: '#taikang' },
-                { title: '高息美元 MMF', subtitle: '关注美联储利率走势', status: 'ACTIVE', sort_order: 8,
+                { title: '高息美元 MMF', status: 'ACTIVE', sort_order: 8,
                   valid_from: '2026-04-01T00:00', valid_to: '2026-10-31T23:59', link_url: '#high-yield' },
-                { title: '机构客户专享', subtitle: '大额申购专属服务', status: 'ACTIVE', sort_order: 9,
+                { title: '机构客户专享', status: 'ACTIVE', sort_order: 9,
                   valid_from: '2026-01-15T00:00', valid_to: '2026-12-15T23:59', link_url: '#inst' },
-                { title: '跨境理财通专题', subtitle: '合资格基金一览', status: 'ACTIVE', sort_order: 10,
+                { title: '跨境理财通专题', status: 'ACTIVE', sort_order: 10,
                   valid_from: '2026-05-01T00:00', valid_to: '2026-12-31T23:59', link_url: '#wmc' },
-                { title: '年末回馈活动', subtitle: '活动细则以公告为准', status: 'INACTIVE', sort_order: 11,
+                { title: '年末回馈活动', status: 'INACTIVE', sort_order: 11,
                   valid_from: '2026-11-01T00:00', valid_to: '2026-12-31T23:59', link_url: '#yearend' },
-                { title: '低风险配置推荐', subtitle: '保守型投资者优选', status: 'ACTIVE', sort_order: 12,
+                { title: '低风险配置推荐', status: 'ACTIVE', sort_order: 12,
                   valid_from: '2026-03-20T00:00', valid_to: '2026-09-20T23:59', link_url: '#low-risk' }
             ];
             return base.map((b, i) => ({
                 id: i + 1,
                 position: DEFAULT_POSITION,
-                image_url: '',
+                image_i18n: { 'zh-CN': '', 'zh-TW': '', en: '' },
                 gradient: GRADIENTS[i % GRADIENTS.length],
                 ...b
             }));
@@ -517,6 +529,8 @@
         let previewId = 1;
         let pageState = { current: 1, pageSize: 10 };
         let filters = { title: '', status: '', validFrom: '', validTo: '' };
+        let imageLang = 'zh-CN';
+        let draftImages = { 'zh-CN': '', 'zh-TW': '', en: '' };
 
         function positionLabel(pos) {
             return positionPathLabel(pos);
@@ -632,12 +646,41 @@
             renderTable();
         }
 
+        function bannerImageSummary(b) {
+            const img = b.image_i18n || {};
+            const ok = ['zh-CN', 'zh-TW', 'en'].filter(l => img[l]).length;
+            return ok ? `已传 ${ok}/3 语言` : '未上传';
+        }
+
+        function syncDraftImageFromInput() {
+            draftImages[imageLang] = document.getElementById('fImage').value.trim();
+            const preview = document.getElementById('fImagePreview');
+            const url = draftImages[imageLang];
+            if (url) {
+                preview.src = url;
+                preview.style.display = 'block';
+            } else {
+                preview.removeAttribute('src');
+                preview.style.display = 'none';
+            }
+        }
+
+        function switchImageLang(lang) {
+            syncDraftImageFromInput();
+            imageLang = lang;
+            document.querySelectorAll('#imageLangTabs button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            document.getElementById('fImage').value = draftImages[lang] || '';
+            syncDraftImageFromInput();
+        }
+
         function renderTable() {
             const { rows, total, totalPages } = getPagedBanners();
             document.getElementById('bannerTable').innerHTML = rows.length ? rows.map(b => `
                 <tr onclick="selectPreview(${b.id})" style="cursor:pointer;">
                     <td><strong>${b.title}</strong></td>
-                    <td style="max-width:160px;">${b.subtitle || '—'}</td>
+                    <td style="font-size:12px;color:#666">${bannerImageSummary(b)}</td>
                     <td><span class="pos-tag pos-path">${positionPathLabel(b.position).split(' › ').join('<span class="sep">›</span>')}</span></td>
                     <td>${b.sort_order}</td>
                     <td style="font-size:12px;">${fmtDateRange(b.valid_from, b.valid_to)}</td>
@@ -662,8 +705,13 @@
             const b = banners.find(x => x.id === id);
             if (!b) return;
             document.getElementById('pvTitle').textContent = b.title;
-            document.getElementById('pvSubtitle').textContent = b.subtitle || '';
-            document.getElementById('previewBanner').style.background = b.gradient;
+            const img = b.image_i18n?.['zh-CN'] || b.image_i18n?.en || b.image_i18n?.['zh-TW'] || '';
+            const el = document.getElementById('previewBanner');
+            if (img) {
+                el.style.background = `linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('${img}') center/cover`;
+            } else {
+                el.style.background = b.gradient;
+            }
             document.getElementById('previewBannerId').textContent = `#${b.id}`;
         }
 
@@ -671,13 +719,14 @@
 
         function setModalReadOnly(readonly) {
             modalReadOnly = readonly;
-            const ids = ['fTitle', 'fSubtitle', 'fSort', 'fValidFrom', 'fValidTo', 'fStatus', 'fLink', 'fImage'];
+            const ids = ['fTitle', 'fSort', 'fValidFrom', 'fValidTo', 'fStatus', 'fLink', 'fImage', 'fImageFile'];
             ids.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.disabled = readonly;
             });
             document.getElementById('positionTree').style.pointerEvents = readonly ? 'none' : '';
             document.getElementById('positionTree').style.opacity = readonly ? '0.75' : '';
+            document.getElementById('imageLangTabs').style.pointerEvents = readonly ? 'none' : '';
             const saveBtn = document.querySelector('#bannerModal .modal-footer .btn-primary');
             if (saveBtn) saveBtn.style.display = readonly ? 'none' : '';
         }
@@ -689,25 +738,34 @@
         function openModal(id, viewOnly = false) {
             document.getElementById('modalTitle').textContent = viewOnly ? '查看 Banner' : (id ? '编辑 Banner' : '新增 Banner');
             document.getElementById('editId').value = id || '';
+            imageLang = 'zh-CN';
+            document.querySelectorAll('#imageLangTabs button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === 'zh-CN');
+            });
             if (id) {
                 const b = banners.find(x => x.id === id);
                 document.getElementById('fTitle').value = b.title;
-                document.getElementById('fSubtitle').value = b.subtitle || '';
                 selectPosition(b.position || DEFAULT_POSITION);
                 document.getElementById('fSort').value = b.sort_order;
                 document.getElementById('fValidFrom').value = b.valid_from;
                 document.getElementById('fValidTo').value = b.valid_to;
                 document.getElementById('fStatus').value = b.status;
                 document.getElementById('fLink').value = b.link_url || '';
-                document.getElementById('fImage').value = b.image_url || '';
+                draftImages = { 'zh-CN': '', 'zh-TW': '', en: '', ...(b.image_i18n || {}) };
+                if (!draftImages['zh-CN'] && b.image_url) draftImages['zh-CN'] = b.image_url;
             } else {
-                ['fTitle','fSubtitle','fLink','fImage'].forEach(i => document.getElementById(i).value = '');
+                document.getElementById('fTitle').value = '';
+                document.getElementById('fLink').value = '';
                 selectPosition(DEFAULT_POSITION);
                 document.getElementById('fSort').value = banners.length + 1;
                 document.getElementById('fStatus').value = 'ACTIVE';
                 document.getElementById('fValidFrom').value = '2026-07-01T00:00';
                 document.getElementById('fValidTo').value = '2026-12-31T23:59';
+                draftImages = { 'zh-CN': '', 'zh-TW': '', en: '' };
             }
+            document.getElementById('fImage').value = draftImages['zh-CN'] || '';
+            document.getElementById('fImageFile').value = '';
+            syncDraftImageFromInput();
             setModalReadOnly(viewOnly);
             document.getElementById('bannerModal').classList.add('active');
         }
@@ -721,16 +779,17 @@
             if (modalReadOnly) return;
             const title = document.getElementById('fTitle').value.trim();
             if (!title) { alert('请填写标题'); return; }
+            syncDraftImageFromInput();
             const data = {
                 title,
-                subtitle: document.getElementById('fSubtitle').value.trim(),
                 position: document.getElementById('fPosition').value,
                 sort_order: parseInt(document.getElementById('fSort').value) || 0,
                 valid_from: document.getElementById('fValidFrom').value,
                 valid_to: document.getElementById('fValidTo').value,
                 status: document.getElementById('fStatus').value,
                 link_url: document.getElementById('fLink').value,
-                image_url: document.getElementById('fImage').value,
+                image_i18n: { ...draftImages },
+                image_url: draftImages['zh-CN'] || '',
                 gradient: 'linear-gradient(135deg, #4c1d95, #7c3aed, #a78bfa)'
             };
             const editId = document.getElementById('editId').value;
@@ -764,6 +823,21 @@
 
         document.getElementById('bannerModal').addEventListener('click', e => {
             if (e.target.id === 'bannerModal') closeModal();
+        });
+
+        document.getElementById('imageLangTabs')?.addEventListener('click', e => {
+            const btn = e.target.closest('button[data-lang]');
+            if (btn) switchImageLang(btn.dataset.lang);
+        });
+        document.getElementById('fImage')?.addEventListener('input', syncDraftImageFromInput);
+        document.getElementById('fImageFile')?.addEventListener('change', e => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const url = URL.createObjectURL(file);
+            document.getElementById('fImage').value = url;
+            draftImages[imageLang] = url;
+            syncDraftImageFromInput();
+            showToast(`已选择「${file.name}」作为 ${imageLang} 图片（原型本地预览）`);
         });
 
         document.addEventListener('DOMContentLoaded', () => {

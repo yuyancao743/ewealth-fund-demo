@@ -78,6 +78,19 @@ tr.data-row:hover{background:#fafafa}
 .kv-val{font-size:14px;font-weight:600;color:#333;word-break:break-all}
 .form-textarea{width:100%;min-height:88px;padding:8px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical}
 .form-textarea:focus{border-color:#1890ff;outline:none;box-shadow:0 0 0 2px rgba(24,144,255,.12)}
+.kv-table th .req{color:#ff4d4f;margin-right:2px}
+.lang-switch{display:flex;gap:0;border:1px solid #d9d9d9;border-radius:6px;overflow:hidden;background:#fff}
+.lang-switch button{padding:5px 12px;border:none;background:#fff;font-size:12px;cursor:pointer;color:#666;border-right:1px solid #d9d9d9}
+.lang-switch button:last-child{border-right:none}
+.lang-switch button.active{background:#1890ff;color:#fff;font-weight:600}
+.btn-ai-translate{background:#722ed1;color:#fff;border-color:#722ed1;font-size:12px;padding:5px 10px}
+.btn-ai-translate:disabled{opacity:.55;cursor:not-allowed}
+.ai-translate-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.ai-translate-tip{font-size:12px;color:#fa8c16;line-height:1.3;max-width:260px;text-align:right}
+.drawer-hd-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.drawer.view-mode .form-input,.drawer.view-mode .form-select,.drawer.view-mode .form-textarea{pointer-events:none;background:#f5f5f5;color:#666}
+.drawer.view-mode .btn-ai-translate,
+.drawer.view-mode .ai-translate-wrap{display:none!important}
 </style>
 </head>
 <body>
@@ -94,7 +107,7 @@ tr.data-row:hover{background:#fafafa}
       <div class="filter-bar">
         <div class="filter-item">
           <label>基金公司</label>
-          <input type="text" class="filter-input" id="filterName" placeholder="搜索基金公司名称">
+          <input type="text" class="filter-input" id="filterName" placeholder="输入名称模糊搜索">
         </div>
         <div class="filter-item">
           <label>邮箱</label>
@@ -142,7 +155,18 @@ tr.data-row:hover{background:#fafafa}
 <div class="drawer" id="drawer">
   <div class="drawer-hd">
     <h2 id="drawerTitle">新增基金公司</h2>
-    <button class="drawer-close" onclick="closeDrawer()" title="关闭">&times;</button>
+    <div class="drawer-hd-actions">
+      <div class="lang-switch" id="issuerLangSwitch">
+        <button type="button" data-lang="zh-CN" class="active">简体</button>
+        <button type="button" data-lang="zh-TW">繁体</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+      <div class="ai-translate-wrap" id="issuerAiTranslateWrap">
+        <button type="button" class="btn btn-ai-translate" id="btnIssuerAiTranslate" onclick="aiBatchTranslateIssuer()">首次AI 批量翻译</button>
+        <div class="ai-translate-tip" id="issuerAiTranslateTip" style="display:none">请先完善并保存当前语言后再翻译</div>
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()" title="关闭">&times;</button>
+    </div>
   </div>
   <div class="drawer-body">
     <div class="panel-title">基金公司 · 联系方式</div>
@@ -156,14 +180,15 @@ tr.data-row:hover{background:#fafafa}
 </div>
 <div class="toast" id="toast"></div>
 
-<script src="data/mof_sidebar.js"></script>
-<script src="data/fund_house_publishers.js"></script>
+<script src="data/mof_sidebar.js?v=20260713c"></script>
+<script src="data/fund_house_publishers.js?v=20260713c"></script>
 <script>
 const FIELDS = [
   'fund_company_name', 'dealing_contact', 'phone', 'email', 'fax',
   'receiving_bank', 'account_name', 'account_number', 'swift', 'currency', 'status', 'remark'
 ];
 const REQUIRED = ['fund_company_name', 'dealing_contact', 'phone', 'email', 'receiving_bank', 'account_name', 'account_number', 'swift', 'currency'];
+const I18N_FIELDS = ['fund_company_name', 'dealing_contact', 'receiving_bank', 'account_name', 'remark'];
 const CONTACT_FIELDS = [
   ['fund_company_name', '基金公司', true],
   ['dealing_contact', 'Dealing 联系人', true],
@@ -185,8 +210,99 @@ let filters = { name: '', email: '', status: '' };
 let drawerId = null;
 let drawerMode = null; // view | edit | create
 let nextId = publishers.length + 1;
+let uiLang = 'zh-CN';
+let draftRecord = null;
 
 document.getElementById('sidebarMount').outerHTML = mofSidebarHtml('issuer-fund');
+
+function ensureIssuerI18n(rec) {
+  if (!rec) return;
+  rec.i18n = rec.i18n || {};
+  I18N_FIELDS.forEach(f => {
+    rec.i18n[f] = rec.i18n[f] || {};
+    ['zh-CN', 'zh-TW', 'en'].forEach(lang => {
+      if (rec.i18n[f][lang] == null || rec.i18n[f][lang] === '') {
+        if (lang === 'zh-CN') rec.i18n[f][lang] = rec[f] || '';
+        else rec.i18n[f][lang] = rec.i18n[f][lang] || '';
+      }
+    });
+  });
+  rec.i18n_translated = !!rec.i18n_translated;
+  rec.i18n_source_lang = rec.i18n_source_lang || null;
+}
+
+function mockTranslateIssuer(text, from, to) {
+  if (!text) return '';
+  if (from === to) return text;
+  const s2t = {
+    '中国': '中國', '平安': '平安', '资产': '資產', '管理': '管理', '有限': '有限', '公司': '公司',
+    '香港': '香港', '泰康': '泰康', '广发': '廣發', '大成': '大成', '博时': '博時', '基金': '基金',
+    '汇丰': '匯豐', '银行': '銀行', '中国银行': '中國銀行', '渣打': '渣打', '花旗': '花旗',
+    '摩根': '摩根', '大通': '大通', '系列': '系列', '货币': '貨幣', '主对接': '主對接', '发行商': '發行商',
+    '备注': '備註'
+  };
+  const phraseEn = {
+    '中国平安资产管理（香港）有限公司': 'Ping An Asset Management (Hong Kong) Co., Ltd.',
+    '泰康资产管理': 'Taikang Asset Management',
+    '广发基金': 'GF Fund Management',
+    '大成基金': 'Da Cheng Fund Management',
+    '博时基金': 'Bosera Asset Management',
+    '汇丰银行（香港）有限公司': 'The Hongkong and Shanghai Banking Corporation Limited',
+    '中国银行（香港）': 'Bank of China (Hong Kong)',
+    '渣打银行（香港）': 'Standard Chartered Bank (Hong Kong)',
+    '花旗银行（香港）': 'Citibank (Hong Kong)',
+    '摩根大通银行': 'JPMorgan Chase Bank',
+    '平安基金 Dealing Desk': 'Ping An Fund Dealing Desk',
+    '平安系列货币基金主对接发行商': 'Primary issuer counterpart for Ping An MMF series'
+  };
+  const applyMap = (src, map) => {
+    let out = src;
+    Object.keys(map).sort((a, b) => b.length - a.length).forEach(k => { out = out.split(k).join(map[k]); });
+    return out;
+  };
+  if (to === 'en') return phraseEn[text] || text;
+  if (from === 'en' && to === 'zh-CN') {
+    const rev = Object.fromEntries(Object.entries(phraseEn).map(([k, v]) => [v, k]));
+    return rev[text] || text;
+  }
+  if (to === 'zh-TW') return applyMap(from === 'en' ? mockTranslateIssuer(text, 'en', 'zh-CN') : text, s2t);
+  if (to === 'zh-CN' && from === 'zh-TW') {
+    const t2s = Object.fromEntries(Object.entries(s2t).map(([a, b]) => [b, a]));
+    return applyMap(text, t2s);
+  }
+  if (from === 'en' && to === 'zh-TW') return mockTranslateIssuer(mockTranslateIssuer(text, 'en', 'zh-CN'), 'zh-CN', 'zh-TW');
+  return text;
+}
+
+function seedIssuerI18n(rec) {
+  ensureIssuerI18n(rec);
+  I18N_FIELDS.forEach(f => {
+    const zh = rec[f] || rec.i18n[f]['zh-CN'] || '';
+    if (!zh) return;
+    if (!rec.i18n[f]['zh-CN']) rec.i18n[f]['zh-CN'] = zh;
+    if (!rec.i18n[f]['zh-TW']) rec.i18n[f]['zh-TW'] = mockTranslateIssuer(zh, 'zh-CN', 'zh-TW');
+    if (!rec.i18n[f].en) {
+      const en = mockTranslateIssuer(zh, 'zh-CN', 'en');
+      rec.i18n[f].en = en;
+    }
+  });
+}
+
+function getI18nField(rec, field, lang) {
+  ensureIssuerI18n(rec);
+  return rec.i18n?.[field]?.[lang] || (lang === 'zh-CN' ? (rec[field] || '') : '') || '';
+}
+
+function setI18nField(rec, field, lang, value) {
+  ensureIssuerI18n(rec);
+  rec.i18n[field][lang] = value;
+  if (lang === 'zh-CN') rec[field] = value;
+}
+
+function displayIssuerName(p) {
+  seedIssuerI18n(p);
+  return getI18nField(p, 'fund_company_name', 'zh-CN') || p.fund_company_name || '—';
+}
 
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -197,7 +313,7 @@ function showToast(msg) {
 
 function getFiltered() {
   return publishers.filter(p => {
-    if (filters.name && !p.fund_company_name.toLowerCase().includes(filters.name.toLowerCase())) return false;
+    if (filters.name && !displayIssuerName(p).toLowerCase().includes(filters.name.toLowerCase())) return false;
     if (filters.email && !p.email.toLowerCase().includes(filters.email.toLowerCase())) return false;
     if (filters.status && p.status !== filters.status) return false;
     return true;
@@ -252,13 +368,14 @@ function resetFilter() {
 
 function renderTable() {
   const { rows, total, totalPages } = getPaged();
-  document.getElementById('tableBody').innerHTML = rows.length ? rows.map(p => `
-    <tr class="data-row">
-      <td><strong>${p.fund_company_name}</strong></td>
-      <td>${p.dealing_contact}</td>
+  document.getElementById('tableBody').innerHTML = rows.length ? rows.map(p => {
+    seedIssuerI18n(p);
+    return `<tr class="data-row">
+      <td><strong>${displayIssuerName(p)}</strong></td>
+      <td>${getI18nField(p, 'dealing_contact', 'zh-CN') || p.dealing_contact || '—'}</td>
       <td>${p.phone}</td>
       <td>${p.email}</td>
-      <td>${p.receiving_bank}</td>
+      <td>${getI18nField(p, 'receiving_bank', 'zh-CN') || p.receiving_bank || '—'}</td>
       <td>${p.currency}</td>
       <td><span class="badge badge-${p.status === 'ACTIVE' ? 'active' : 'inactive'}">${p.status === 'ACTIVE' ? '启用' : '停用'}</span></td>
       <td style="font-size:12px;color:#666">${p.updated_at}</td>
@@ -267,8 +384,14 @@ function renderTable() {
         <button class="btn-link" onclick="openEdit('${p.id}')">编辑</button>
         <button class="btn-link danger" onclick="deletePublisher('${p.id}')">删除</button>
       </td>
-    </tr>`).join('') : `<tr><td colspan="9"><div class="empty-state">暂无数据</div></td></tr>`;
+    </tr>`;
+  }).join('') : `<tr><td colspan="9"><div class="empty-state">暂无数据</div></td></tr>`;
   document.getElementById('paginationBar').innerHTML = mofPaginationHtml(total, pageState.current, pageState.pageSize, totalPages);
+}
+
+function fieldValueForLang(record, key) {
+  if (I18N_FIELDS.includes(key)) return getI18nField(record, key, uiLang);
+  return record[key];
 }
 
 function buildFieldRow(key, label, required, type, value, editable) {
@@ -296,25 +419,95 @@ function buildFieldRow(key, label, required, type, value, editable) {
 }
 
 function getRecord() {
-  if (drawerMode === 'create') return {};
+  if (drawerMode === 'create') return draftRecord || {};
   return publishers.find(p => p.id === drawerId) || {};
+}
+
+function issuerRequiredMissing() {
+  syncIssuerI18nFromDom();
+  const data = {};
+  REQUIRED.forEach(k => {
+    const el = document.getElementById('f_' + k);
+    if (!el) { data[k] = ''; return; }
+    if (I18N_FIELDS.includes(k)) {
+      const rec = getRecord();
+      data[k] = (getI18nField(rec, k, uiLang) || el.value || '').trim();
+    } else {
+      data[k] = el.value.trim();
+    }
+  });
+  return REQUIRED.filter(k => !data[k]);
+}
+
+function canUseIssuerAiTranslate() {
+  if (drawerMode === 'view') return false;
+  const rec = getRecord();
+  if (!rec || rec.i18n_translated) return false;
+  // 新增未保存不可点；编辑已有记录视为已保存
+  if (drawerMode === 'create') return false;
+  return issuerRequiredMissing().length === 0;
+}
+
+function updateIssuerAiBtn() {
+  const btn = document.getElementById('btnIssuerAiTranslate');
+  const tipEl = document.getElementById('issuerAiTranslateTip');
+  const wrap = document.getElementById('issuerAiTranslateWrap');
+  if (!btn) return;
+  const tip = '请先完善并保存当前语言后再翻译';
+  if (tipEl) tipEl.textContent = tip;
+  const readonly = drawerMode === 'view';
+  if (wrap) wrap.style.display = readonly ? 'none' : '';
+  btn.style.display = '';
+  const rec = getRecord();
+  if (rec.i18n_translated) {
+    btn.disabled = true;
+    btn.textContent = '已完成首次翻译';
+    btn.title = '首次翻译已完成；之后各语言独立编辑，互不联动';
+    if (tipEl) tipEl.style.display = 'none';
+    return;
+  }
+  btn.textContent = '首次AI 批量翻译';
+  const ok = canUseIssuerAiTranslate();
+  btn.disabled = !ok;
+  btn.title = ok ? '以当前语言内容为源，批量翻译到其他语言（仅首次）' : tip;
+  if (tipEl) tipEl.style.display = (!readonly && !ok) ? 'block' : 'none';
+}
+
+function syncIssuerI18nFromDom() {
+  const rec = getRecord();
+  if (!rec || drawerMode === 'view') return;
+  ensureIssuerI18n(rec);
+  I18N_FIELDS.forEach(k => {
+    const el = document.getElementById('f_' + k);
+    if (el) setI18nField(rec, k, uiLang, el.value.trim());
+  });
 }
 
 function renderDrawerForm() {
   const record = getRecord();
+  ensureIssuerI18n(record);
   const editable = drawerMode === 'edit' || drawerMode === 'create';
+  document.getElementById('drawer').classList.toggle('view-mode', drawerMode === 'view');
 
   document.getElementById('contactTable').innerHTML = CONTACT_FIELDS.map(([k,l,r]) =>
-    buildFieldRow(k, l, r, 'text', record[k], editable)).join('');
+    buildFieldRow(k, l, r, 'text', fieldValueForLang(record, k), editable)).join('');
   document.getElementById('bankTable').innerHTML = BANK_FIELDS.map(([k,l,r,t]) =>
-    buildFieldRow(k, l, r, t, record[k], editable)).join('');
+    buildFieldRow(k, l, r, t, fieldValueForLang(record, k), editable)).join('');
   document.getElementById('otherTable').innerHTML = [
     buildFieldRow('status', '状态', false, 'select', record.status || 'ACTIVE', editable),
-    buildFieldRow('remark', '备注', false, 'textarea', record.remark || '', editable)
+    buildFieldRow('remark', '备注', false, 'textarea', fieldValueForLang(record, 'remark'), editable)
   ].join('');
 
-  const titles = { create: '新增', edit: '编辑基金公司', view: record.fund_company_name || '基金公司详情' };
+  const titles = {
+    create: '新增',
+    edit: '编辑基金公司',
+    view: getI18nField(record, 'fund_company_name', uiLang) || record.fund_company_name || '基金公司详情'
+  };
   document.getElementById('drawerTitle').textContent = titles[drawerMode];
+  document.querySelectorAll('#issuerLangSwitch button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === uiLang);
+  });
+  updateIssuerAiBtn();
 
   const ft = document.getElementById('drawerFooter');
   if (drawerMode === 'view') {
@@ -325,12 +518,64 @@ function renderDrawerForm() {
     ft.innerHTML = `
       <button class="btn btn-secondary" onclick="closeDrawer()">取消</button>
       <button class="btn btn-primary" onclick="savePublisher()">保存</button>`;
+    document.querySelectorAll('#drawer .form-input, #drawer .form-select, #drawer .form-textarea').forEach(el => {
+      el.addEventListener('input', updateIssuerAiBtn);
+      el.addEventListener('change', updateIssuerAiBtn);
+    });
   }
+}
+
+function switchIssuerLang(lang) {
+  if (lang === uiLang) return;
+  syncIssuerI18nFromDom();
+  uiLang = lang;
+  renderDrawerForm();
+  showToast('已切换至 ' + ({ 'zh-CN': '简体', 'zh-TW': '繁体', en: 'EN' }[lang] || lang));
+}
+
+function aiBatchTranslateIssuer() {
+  if (drawerMode === 'view') return;
+  const rec = getRecord();
+  ensureIssuerI18n(rec);
+  if (rec.i18n_translated) { showToast('已完成首次翻译，请分别编辑各语言'); return; }
+  syncIssuerI18nFromDom();
+  if (!canUseIssuerAiTranslate()) {
+    showToast('请先完善并保存当前语言后再翻译');
+    updateIssuerAiBtn();
+    return;
+  }
+  const sourceLang = uiLang;
+  showToast('AI 正在批量翻译…');
+  setTimeout(() => {
+    ['zh-CN', 'zh-TW', 'en'].forEach(lang => {
+      if (lang === sourceLang) return;
+      I18N_FIELDS.forEach(field => {
+        const src = getI18nField(rec, field, sourceLang);
+        if (src && !getI18nField(rec, field, lang)) {
+          setI18nField(rec, field, lang, mockTranslateIssuer(src, sourceLang, lang));
+        }
+      });
+    });
+    rec.i18n_source_lang = sourceLang;
+    rec.i18n_translated = true;
+    updateIssuerAiBtn();
+    renderDrawerForm();
+    showToast('首次 AI 批量翻译完成；之后各语言独立编辑，不联动');
+  }, 700);
 }
 
 function openDrawer(mode, id) {
   drawerMode = mode;
   drawerId = id || null;
+  uiLang = 'zh-CN';
+  if (mode === 'create') {
+    draftRecord = { status: 'ACTIVE', i18n_translated: false };
+    ensureIssuerI18n(draftRecord);
+  } else {
+    draftRecord = null;
+    const rec = publishers.find(p => p.id === id);
+    if (rec) seedIssuerI18n(rec);
+  }
   renderDrawerForm();
   document.getElementById('drawerMask').classList.add('open');
   document.getElementById('drawer').classList.add('open');
@@ -343,6 +588,8 @@ function closeDrawer() {
   document.body.style.overflow = '';
   drawerId = null;
   drawerMode = null;
+  draftRecord = null;
+  uiLang = 'zh-CN';
 }
 
 function openCreate() { openDrawer('create'); }
@@ -350,11 +597,21 @@ function openView(id) { openDrawer('view', id); }
 function openEdit(id) { openDrawer('edit', id); }
 
 function readFormData() {
+  syncIssuerI18nFromDom();
+  const rec = getRecord();
   const data = {};
   FIELDS.forEach(k => {
     const el = document.getElementById('f_' + k);
-    if (el) data[k] = el.value.trim();
+    if (!el) return;
+    if (I18N_FIELDS.includes(k)) {
+      data[k] = getI18nField(rec, k, 'zh-CN') || el.value.trim();
+    } else {
+      data[k] = el.value.trim();
+    }
   });
+  data.i18n = rec.i18n ? JSON.parse(JSON.stringify(rec.i18n)) : undefined;
+  data.i18n_translated = !!rec.i18n_translated;
+  data.i18n_source_lang = rec.i18n_source_lang || null;
   return data;
 }
 
@@ -373,15 +630,19 @@ function savePublisher() {
   if (drawerMode === 'create') {
     const id = 'FH' + String(nextId++).padStart(3, '0');
     publishers.unshift({ id, ...data, updated_at: ts, updated_by: '管理员' });
-    showToast('新增成功');
+    draftRecord = null;
+    drawerMode = 'edit';
+    drawerId = id;
+    showToast('新增成功，可进行首次 AI 批量翻译');
+    renderDrawerForm();
   } else {
     const idx = publishers.findIndex(p => p.id === drawerId);
     if (idx >= 0) {
       publishers[idx] = { ...publishers[idx], ...data, updated_at: ts };
       showToast('保存成功');
+      renderDrawerForm();
     }
   }
-  closeDrawer();
   renderTable();
 }
 
@@ -393,7 +654,13 @@ function deletePublisher(id) {
   renderTable();
 }
 
+document.getElementById('issuerLangSwitch')?.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-lang]');
+  if (btn) switchIssuerLang(btn.dataset.lang);
+});
+
 document.addEventListener('DOMContentLoaded', () => {
+  publishers.forEach(seedIssuerI18n);
   renderTable();
   const urlId = new URLSearchParams(location.search).get('id');
   if (urlId && publishers.find(p => p.id === urlId)) openView(urlId);

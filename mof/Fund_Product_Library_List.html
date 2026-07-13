@@ -116,8 +116,27 @@ tr.data-row:hover{background:#fafafa}
 .info-table{width:100%;border-collapse:collapse;table-layout:fixed}
 .info-table th,.info-table td{border:1px solid #e8e8e8;padding:10px 12px;text-align:left;font-size:13px}
 .info-table th{width:11%;background:#fafafa;color:#666;font-weight:500}
-.info-table td{background:#f5f5f5;color:#666}
+.info-table td{background:#fff;color:#333}
+.info-table td input,.info-table td select{width:100%;padding:6px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;background:#fff}
+.info-table td .ro{background:#f5f5f5;color:#666;display:block;padding:6px 0}
 .sync-note{padding:10px 20px 14px;font-size:12px;color:#999;background:#fafafa;border-top:1px solid #f0f0f0}
+.lang-switch{display:flex;gap:0;border:1px solid #d9d9d9;border-radius:6px;overflow:hidden;background:#fff}
+.lang-switch button{padding:6px 14px;border:none;background:#fff;font-size:13px;cursor:pointer;color:#666;border-right:1px solid #d9d9d9}
+.lang-switch button:last-child{border-right:none}
+.lang-switch button.active{background:#1890ff;color:#fff;font-weight:600}
+.btn-ai-translate{background:#722ed1;color:#fff;border-color:#722ed1;font-size:13px}
+.btn-ai-translate:disabled{opacity:.55;cursor:not-allowed}
+.ai-translate-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.ai-translate-tip{font-size:12px;color:#fa8c16;line-height:1.3;max-width:280px;text-align:right}
+.featured-order-wrap{display:flex;align-items:center;gap:8px;white-space:nowrap;background:#fff;border:1px solid #e8e8e8;border-radius:6px;padding:8px 14px;font-size:13px}
+.featured-order-wrap input{width:64px;padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px}
+.updated-at{font-size:12px;color:#999;font-variant-numeric:tabular-nums;white-space:nowrap}
+.nav-schedule-note{padding:8px 20px;font-size:12px;color:#666;background:#fffbe6;border-bottom:1px solid #ffe58f}
+.op-log-section{margin-top:16px}
+.op-log-table{width:100%;border-collapse:collapse;font-size:12px}
+.op-log-table th,.op-log-table td{padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:left}
+.op-log-table th{background:#fafafa;color:#666;font-weight:600}
+.header-meta-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;width:100%;margin-bottom:8px}
 .scrape-hint{padding:8px 20px 12px;font-size:12px;color:#999;background:#fff;border-bottom:1px solid #f0f0f0;margin:0}
 /* 行铺满表格 */
 .field-rows{border-top:1px solid #f0f0f0}
@@ -229,6 +248,11 @@ tr.data-row:hover{background:#fafafa}
 .view-mode .fund-website-input{pointer-events:none}
 .view-mode .tag-remove{display:none}
 .view-mode .perf-toolbar,.view-mode .nav-toolbar,.view-mode .month-search-row,.view-mode .fund-house-cell input,.view-mode .fund-house-cell .btn-sm,.view-mode .field-cell .inline-actions .btn-sm{display:none!important}
+.view-mode .featured-order-wrap input,.view-mode #fld_featured_sort{pointer-events:none;background:#f5f5f5;color:#666}
+.view-mode .btn-ai-translate,
+.view-mode .ai-translate-wrap{display:none!important}
+.view-mode .info-table td input,.view-mode .info-table td select{pointer-events:none;background:#f5f5f5;border-color:#eee;color:#666}
+.info-table th .req{color:#ff4d4f;margin-right:2px}
 </style>
 </head>
 <body>
@@ -304,6 +328,7 @@ tr.data-row:hover{background:#fafafa}
       </div>
       <div class="table-section">
         <div class="table-toolbar">
+          <button class="btn btn-primary" onclick="openCreate()">+ 新增产品</button>
           <button class="btn btn-secondary" onclick="openImportModal()">导入</button>
           <button class="btn btn-secondary" onclick="location.href='Ops_Banner_Config.html'">Banner 配置</button>
         </div>
@@ -311,7 +336,7 @@ tr.data-row:hover{background:#fafafa}
           <table>
             <thead><tr>
               <th>产品名称</th><th>基金公司</th><th>基金风险等级</th><th>基金类别</th>
-              <th>份额类别</th><th>货币</th><th>投资者限制</th><th>是否精选</th><th>状态</th><th>操作</th>
+              <th>份额类别</th><th>货币</th><th>投资者限制</th><th>是否精选</th><th>精选排序</th><th>状态</th><th>最后更新</th><th>操作</th>
             </tr></thead>
             <tbody id="tableBody"></tbody>
           </table>
@@ -335,19 +360,37 @@ tr.data-row:hover{background:#fafafa}
               <a class="fund-website-link" id="fundWebsite" href="#" target="_blank" rel="noopener"></a>
             </div>
           </div>
-          <span class="scrape-time" id="scrapeTimeDisplay"></span>
+          <span class="scrape-time" id="scrapeTimeDisplay" style="display:none"></span>
+          <span class="updated-at" id="lastUpdatedDisplay" style="display:none"></span>
         </div>
-        <div class="header-meta">
-          <div class="status-toggle">
-            <span>状态</span>
-            <select class="status-select" id="productStatus">
-              <option value="LISTED">已上架</option><option value="DELISTED">已下架</option>
-              <option value="PAUSED">暂停</option>
-            </select>
+        <div class="header-meta" style="flex-direction:column;align-items:flex-end">
+          <div class="header-meta-top">
+            <div class="lang-switch" id="productLangSwitch">
+              <button type="button" data-lang="zh-CN" class="active">简体</button>
+              <button type="button" data-lang="zh-TW">繁体</button>
+              <button type="button" data-lang="en">EN</button>
+            </div>
+            <div class="ai-translate-wrap" id="aiTranslateWrap">
+              <button type="button" class="btn btn-ai-translate" id="btnAiTranslate" onclick="aiBatchTranslate()">首次AI 批量翻译</button>
+              <div class="ai-translate-tip" id="aiTranslateTip" style="display:none">请先完善并保存当前语言后再翻译</div>
+            </div>
           </div>
-          <div class="featured-toggle">
-            <span>是否精选</span>
-            <div class="switch" id="featuredSwitch" onclick="toggleFeatured()"></div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end">
+            <div class="status-toggle">
+              <span>状态</span>
+              <select class="status-select" id="productStatus">
+                <option value="LISTED">已上架</option><option value="DELISTED">已下架</option>
+                <option value="PAUSED">暂停</option>
+              </select>
+            </div>
+            <div class="featured-toggle">
+              <span>是否精选</span>
+              <div class="switch" id="featuredSwitch" onclick="toggleFeatured()"></div>
+            </div>
+            <div class="featured-order-wrap">
+              <span>精选排序</span>
+              <input type="number" id="fld_featured_sort" min="1" step="1" placeholder="">
+            </div>
           </div>
         </div>
       </div>
@@ -362,16 +405,16 @@ tr.data-row:hover{background:#fafafa}
           <div class="panel-section">
             <div class="panel-title">产品信息</div>
             <table class="info-table" id="ayersInfoTable"></table>
-            <div class="sync-note">Ayers product data sync · Default status when synced: Delisted</div>
+            <div class="sync-note">Ayers 暂无产品列表查询接口 · 以下字段可人工维护 · 新增默认状态：已下架</div>
             <div class="field-grid" id="basicFieldsRows"></div>
           </div>
           <div class="panel-section">
-            <div class="panel-title">基金目标</div>
-            <div class="strategy-area"><textarea class="strategy-textarea" id="fundObjective" placeholder="基金投资目标描述"></textarea></div>
+            <div class="panel-title">基金目标 <span style="font-weight:400;font-size:12px;color:#999" id="i18nHintObjective"></span></div>
+            <div class="strategy-area"><textarea class="strategy-textarea" id="fundObjective" placeholder="基金投资目标描述（按当前语言）"></textarea></div>
           </div>
           <div class="panel-section">
-            <div class="panel-title">投资策略</div>
-            <div class="strategy-area"><textarea class="strategy-textarea" id="fundStrategy" placeholder="官网抓取；抓取不到可人工录入，可为空"></textarea></div>
+            <div class="panel-title">投资策略 <span style="font-weight:400;font-size:12px;color:#999" id="i18nHintStrategy"></span></div>
+            <div class="strategy-area"><textarea class="strategy-textarea" id="fundStrategy" placeholder="官网抓取；抓取不到可人工录入（按当前语言）"></textarea></div>
           </div>
           <div class="panel-section">
             <div class="panel-title">产品标签</div>
@@ -425,6 +468,7 @@ tr.data-row:hover{background:#fafafa}
           </div>
           <div class="panel-section">
             <div class="panel-title">基金净值</div>
+            <div class="nav-schedule-note">货币基金 NAV：每天下午 17:00 更新当日 NAV；次日凌晨 04:30 再抓取一次，有新数据则替换，无则保持不变。</div>
             <div class="nav-add-box" id="navAddBox">
               <label>日期 <input type="date" id="navAddDate"></label>
               <label>净值 <input type="text" id="navAddValue" placeholder="如 121.6606" style="width:120px"></label>
@@ -449,7 +493,7 @@ tr.data-row:hover{background:#fafafa}
         </div>
         <div class="tab-panel" id="tab-brochure">
           <div class="panel-section">
-            <div class="panel-title">基金文件</div>
+            <div class="panel-title">基金文件 <span style="font-weight:400;font-size:12px;color:#999" id="brochureLangHint">随顶部语言切换</span></div>
             <div id="brochureDocRoot"></div>
             <div class="panel-title" style="border-top:1px solid #f0f0f0;margin-top:8px">备注</div>
             <div class="strategy-area"><textarea class="strategy-textarea" id="internalRemarks" placeholder="内部备注（可为空）"></textarea></div>
@@ -478,12 +522,18 @@ tr.data-row:hover{background:#fafafa}
   </div>
 </div>
 
-<script src="data/mof_sidebar.js?v=20260709d"></script>
-<script src="data/mmf_products.js?v=20260709e"></script>
-<script src="data/pingan_pammf.js?v=20260708f"></script>
-<script src="data/fund_house_publishers.js?v=20260708f"></script>
-<script src="data/mof_common.js?v=20260708f"></script>
+<script src="data/mof_sidebar.js?v=20260713c"></script>
+<script src="data/mmf_products.js?v=20260713c"></script>
+<script src="data/pingan_pammf.js?v=20260713c"></script>
+<script src="data/fund_house_publishers.js?v=20260713c"></script>
+<script src="data/mof_common.js?v=20260713c"></script>
 <script>
+function i18nFieldList() {
+  return (typeof PRODUCT_I18N_FIELDS !== 'undefined' && Array.isArray(PRODUCT_I18N_FIELDS) && PRODUCT_I18N_FIELDS.length)
+    ? PRODUCT_I18N_FIELDS
+    : ['product_name', 'fund_objective', 'strategy', 'fund_manager_desc'];
+}
+
 function lblRisk(level) {
   return typeof riskLabel === 'function' ? riskLabel(level) : (level ?? '—');
 }
@@ -515,6 +565,114 @@ let selectedPublisher = null;
 let publisherOpen = false;
 let detailTabsInited = false;
 let isReadOnly = false;
+let isCreateMode = false;
+let uiLang = 'zh-CN'; // 详情页当前语言：list 默认简体
+let opLogs = []; // {operator, time, event, product_code}
+
+function nowDateTime() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+function formatUpdatedAt(v) {
+  if (!v) return '—';
+  const s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s + ' 00:00';
+  return s.length >= 16 ? s.slice(0, 16) : s;
+}
+
+function ensureI18n(fundObj) {
+  if (!fundObj) return;
+  const fields = i18nFieldList();
+  fundObj.i18n = fundObj.i18n || {};
+  const langs = ['zh-CN', 'zh-TW', 'en'];
+  fields.forEach(field => {
+    fundObj.i18n[field] = fundObj.i18n[field] || {};
+    langs.forEach(lang => {
+      if (fundObj.i18n[field][lang] == null || fundObj.i18n[field][lang] === '') {
+        if (lang === 'zh-CN' && fundObj[field]) fundObj.i18n[field][lang] = fundObj[field];
+        else fundObj.i18n[field][lang] = fundObj.i18n[field][lang] || '';
+      }
+    });
+  });
+  fundObj.i18n_source_lang = fundObj.i18n_source_lang || null;
+  fundObj.i18n_translated = fundObj.i18n_translated || false;
+}
+
+function getI18nValue(fundObj, field, lang) {
+  ensureI18n(fundObj);
+  return fundObj.i18n?.[field]?.[lang] || (lang === 'zh-CN' ? (fundObj[field] || '') : '') || '';
+}
+
+function setI18nValue(fundObj, field, lang, value) {
+  ensureI18n(fundObj);
+  fundObj.i18n[field][lang] = value;
+  if (lang === 'zh-CN' || !fundObj[field]) fundObj[field] = value;
+}
+
+function displayProductName(p) {
+  ensureI18n(p);
+  return getI18nValue(p, 'product_name', 'zh-CN') || p.product_name || '—';
+}
+
+function pushOpLog(event, productCode) {
+  opLogs.unshift({
+    operator: '管理员',
+    time: nowDateTime(),
+    event,
+    product_code: productCode || fund?.product_code || ''
+  });
+  if (opLogs.length > 200) opLogs.length = 200;
+  renderOpLog();
+}
+
+function renderOpLog() { /* 操作记录仅后端落库，原型不展示 */ }
+
+function createEmptyFund() {
+  const blank = {
+    product_code: '',
+    product_name: '',
+    exchange_code: '',
+    default_isin: '',
+    base_ccy: '',
+    price_spread_code: '',
+    fund_house_name: '',
+    fund_inv_risk_level: '',
+    fund_category_type: 'MMF',
+    fund_category: 'MMF',
+    share_class_label: '',
+    investor_restriction: 'ALL',
+    is_featured: false,
+    featured_sort: null,
+    product_status: 'DELISTED',
+    website_url: '',
+    fund_objective: '',
+    strategy: '',
+    fund_manager_desc: '',
+    product_tags: [],
+    launch_date: '',
+    fund_size: '',
+    trustee: '',
+    dividend_type: '累积型',
+    is_allow_intra_switch: false,
+    subscription_status: 'open',
+    broker_id: '',
+    broker_name: '',
+    fund_managers: '',
+    fiscal_year_end: '',
+    subscribe: {},
+    fund_documents: typeof emptyFundDocuments === 'function' ? emptyFundDocuments() : {},
+    nav_history: [],
+    perf: { annual: {}, monthly: {} },
+    created_at: nowDateTime(),
+    updated_at: nowDateTime(),
+    i18n_source_lang: null,
+    i18n_translated: false
+  };
+  ensureI18n(blank);
+  return blank;
+}
 
 const Router = {
   init() {
@@ -528,6 +686,7 @@ const Router = {
   parse() {
     const parts = (location.hash.slice(1) || '/list').replace(/^\//,'').split('/').filter(Boolean);
     if (!parts.length || parts[0] === 'list') return { view: 'list' };
+    if (parts[0] === 'create') return { view: 'detail', create: true, readOnly: false };
     if ((parts[0] === 'detail' || parts[0] === 'view') && parts[1]) {
       return { view: 'detail', code: decodeURIComponent(parts[1]), readOnly: parts[0] === 'view' };
     }
@@ -536,6 +695,7 @@ const Router = {
   resolve() {
     const r = this.parse();
     isReadOnly = !!r.readOnly;
+    isCreateMode = !!r.create;
     document.getElementById('view-list').classList.toggle('active', r.view === 'list');
     document.getElementById('view-detail').classList.toggle('active', r.view === 'detail');
     document.getElementById('view-detail').classList.toggle('view-mode', r.view === 'detail' && isReadOnly);
@@ -545,15 +705,15 @@ const Router = {
       document.getElementById('headerActions').innerHTML = '<span>管理员</span>';
       try { updateStats(); renderTable(filtered); } catch (e) { console.error(e); }
     } else {
-      const modeLabel = isReadOnly ? '查看产品' : '编辑产品';
+      const modeLabel = isCreateMode ? '新增产品' : (isReadOnly ? '查看产品' : '编辑产品');
       document.getElementById('breadcrumb').innerHTML = `产品中心 / 基金新 / 产品库 / <strong>${modeLabel}</strong>`;
       document.getElementById('headerActions').innerHTML = isReadOnly
         ? `<button class="btn" onclick="Router.go('/list')">返回列表</button>
            <button class="btn btn-primary" onclick="openEdit('${r.code}')">编辑</button>`
-        : `<button class="btn btn-scrape" onclick="scrapePublicData()">抓取网站公共数据</button>
+        : `<button class="btn btn-scrape" onclick="scrapePublicData()" ${isCreateMode ? 'disabled title="请先保存产品"' : ''}>抓取网站公共数据</button>
            <span class="scrape-time" id="headerScrapeTime" style="margin-right:8px"></span>
            <button class="btn" onclick="Router.go('/list')">返回列表</button>`;
-      try { loadDetail(r.code); } catch (e) { console.error(e); showToast('详情加载失败：' + e.message); }
+      try { loadDetail(r.create ? null : r.code); } catch (e) { console.error(e); showToast('详情加载失败：' + e.message); }
     }
   }
 };
@@ -601,7 +761,8 @@ function setProductStatus(code, status) {
   const p = MMF_PRODUCTS.find(x => x.product_code === code);
   if (!p) return;
   p.product_status = status;
-  p.updated_at = new Date().toISOString().slice(0, 10);
+  p.updated_at = nowDateTime();
+  pushOpLog(`PUT /api/mof/funds/${code}/status → ${status}`, code);
   updateStats();
   applyFilters();
   showToast('状态已更新为「' + (STATUS_MAP[status]?.label || status) + '」');
@@ -616,18 +777,21 @@ function renderTable(data) {
   const pageData = data.slice(start, start + pageState.pageSize);
   document.getElementById('paginationBar').innerHTML = typeof mofPaginationHtml === 'function'
     ? mofPaginationHtml(total, pageState.current, pageState.pageSize, totalPages) : '';
-  if (!pageData.length) { tbody.innerHTML = '<tr><td colspan="10" class="empty-state">暂无数据</td></tr>'; return; }
+  if (!pageData.length) { tbody.innerHTML = '<tr><td colspan="12" class="empty-state">暂无数据</td></tr>'; return; }
   tbody.innerHTML = pageData.map(p => {
     const st = lblStatus(p.product_status);
     const feat = !!p.is_featured;
+    const sortNo = p.featured_sort != null && p.featured_sort !== '' ? p.featured_sort : '';
     return `<tr class="data-row">
-      <td><div>${p.product_name}</div><div class="product-code">${p.product_code}</div></td>
-      <td>${p.fund_house_name}</td><td>${lblRisk(p.fund_inv_risk_level)}</td>
+      <td><div>${displayProductName(p)}</div><div class="product-code">${p.product_code || '—'}</div></td>
+      <td>${p.fund_house_name || '—'}</td><td>${lblRisk(p.fund_inv_risk_level)}</td>
       <td><span class="badge badge-mmf">${categoryLabel(p.fund_category_type || p.fund_category)}</span></td>
-      <td>${p.share_class_label || '—'}</td><td>${p.base_ccy}</td>
+      <td>${p.share_class_label || '—'}</td><td>${p.base_ccy || '—'}</td>
       <td>${lblInvestor(p.investor_restriction)}</td>
       <td><span class="badge ${feat ? 'badge-yes' : 'badge-no'}">${feat ? '是' : '否'}</span></td>
+      <td>${sortNo === '' ? '' : sortNo}</td>
       <td><span class="badge ${st.cls}">${st.label}</span></td>
+      <td class="updated-at">${formatUpdatedAt(p.updated_at || p.created_at)}</td>
       <td>
         <button class="btn-link" onclick="openView('${p.product_code}')">查看</button>
         <button class="btn-link" onclick="openEdit('${p.product_code}')">编辑</button>
@@ -691,12 +855,12 @@ function resetFilters() {
 
 function openView(code) { Router.go('/view/' + encodeURIComponent(code)); }
 function openEdit(code) { Router.go('/detail/' + encodeURIComponent(code)); }
+function openCreate() { Router.go('/create'); }
 
 function dash(v) { return (v == null || v === '' || v === '—') ? '<span class="dash">—</span>' : v; }
 
 let navData = [];
 let fundDocuments = typeof emptyFundDocuments === 'function' ? emptyFundDocuments() : {};
-let docLang = {};
 let annualYearsDynamic = [];
 let monthlyKeysDynamic = [];
 let cumColumns = [
@@ -706,7 +870,8 @@ let cumColumns = [
 let selectedNavDates = new Set();
 let dragDoc = null;
 
-const REQUIRED_BASIC_IDS = ['fld_risk_level', 'fld_launch_date', 'fld_fund_size', 'fld_fund_house_select'];
+const REQUIRED_BASIC_IDS = ['fld_product_code', 'fld_isin', 'fld_base_ccy', 'fld_product_name', 'fld_risk_level', 'fld_launch_date', 'fld_fund_size', 'fld_fund_house_select'];
+const REQUIRED_AYERS_IDS = ['fld_product_code', 'fld_isin', 'fld_base_ccy', 'fld_product_name'];
 const REQUIRED_SUB_IDS = ['sub_min', 'sub_inc', 'sub_fee', 'sub_confirm', 'sub_open', 'sub_lock', 'sub_red_fee', 'sub_red_min', 'sub_red_open', 'sub_red_notice', 'sub_mgmt_fee'];
 
 function getCustomCategories() {
@@ -752,23 +917,47 @@ function fieldCell(id, label, val, opts = {}) {
   return `<div class="field-cell${span}"><div class="flabel">${req}${label}</div><div class="${wrapCls}">${input}</div></div>`;
 }
 
+function ayersInput(id, value, required, placeholder) {
+  if (isReadOnly) return `<span class="ro">${dash(value)}</span>`;
+  const esc = (value ?? '').toString().replace(/"/g, '&quot;');
+  const ph = placeholder ? ` placeholder="${placeholder}"` : '';
+  return `<input id="${id}" value="${esc}"${ph}>`;
+}
+
+function ayersLabel(text, required) {
+  return required ? `<span class="req">*</span>${text}` : text;
+}
+
 function renderAyersTable(f) {
-  const rows = [
-    ['Exchange Code', f.exchange_code || '—'],
-    ['Product Code', f.product_code],
-    ['ISIN', f.default_isin || f.product_code],
-    ['Name', f.product_name],
-    ['Currency', f.base_ccy],
-    ['Price Spread Code', f.price_spread_code || '—']
+  const nameVal = getI18nValue(f, 'product_name', uiLang);
+  const cells = [
+    [ayersLabel('Exchange Code', false), ayersInput('fld_exchange_code', f.exchange_code || '', false)],
+    [ayersLabel('Product Code', true), ayersInput('fld_product_code', f.product_code || '', true)],
+    [ayersLabel('ISIN', true), ayersInput('fld_isin', f.default_isin || f.product_code || '', true)],
+    [ayersLabel('Name', true), ayersInput('fld_product_name', nameVal, true, '请输入基金名称')],
+    [ayersLabel('Currency', true), isReadOnly
+      ? `<span class="ro">${dash(f.base_ccy)}</span>`
+      : `<select id="fld_base_ccy"><option value="">请选择</option>${['USD','HKD','CNY','EUR','GBP','SGD'].map(c =>
+          `<option value="${c}"${f.base_ccy===c?' selected':''}>${c}</option>`).join('')}</select>`],
+    [ayersLabel('Price Spread Code', false), ayersInput('fld_price_spread_code', f.price_spread_code || '', false)]
   ];
   let html = '';
-  for (let i = 0; i < rows.length; i += 3) {
-    const chunk = rows.slice(i, i + 3);
-    html += '<tr>' + chunk.map(([k,v]) => `<th>${k}</th><td>${dash(v)}</td>`).join('');
+  for (let i = 0; i < cells.length; i += 3) {
+    const chunk = cells.slice(i, i + 3);
+    html += '<tr>' + chunk.map(([k,v]) => `<th>${k}</th><td>${v}</td>`).join('');
     for (let j = chunk.length; j < 3; j++) html += '<th></th><td></td>';
     html += '</tr>';
   }
   document.getElementById('ayersInfoTable').innerHTML = html;
+  if (!isReadOnly) {
+    const nameEl = document.getElementById('fld_product_name');
+    if (nameEl && !nameEl.dataset.bound) {
+      nameEl.addEventListener('input', () => {
+        document.getElementById('fundTitle').textContent = nameEl.value || (isCreateMode ? '新增产品' : '—');
+      });
+      nameEl.dataset.bound = '1';
+    }
+  }
 }
 
 function fiscalSelectHtml(md) {
@@ -795,20 +984,18 @@ function renderBasicFields(f) {
     `<option value="${p.id}"${matchPublisher(f.fund_house_name)?.id === p.id ? ' selected' : ''}>${p.fund_company_name}</option>`
   ).join('');
   const catTypes = (typeof FUND_CATEGORY_TYPES !== 'undefined' ? FUND_CATEGORY_TYPES : []);
-  const custom = getCustomCategories();
   const curCat = f.fund_category_type || f.fund_category || '';
-  const catOpts = catTypes.map(c => `<option value="${c.id}"${curCat===c.id?' selected':''}>${c.label}</option>`).join('')
-    + custom.map(c => `<option value="${c}"${curCat===c?' selected':''}>${c}</option>`).join('');
+  const catOpts = catTypes.map(c => `<option value="${c.id}"${curCat===c.id?' selected':''}>${c.label}</option>`).join('');
   const subOpts = (typeof SUBSCRIPTION_STATUS_OPTIONS !== 'undefined' ? SUBSCRIPTION_STATUS_OPTIONS : []).map(s =>
     `<option value="${s.id}"${(f.subscription_status||'')===s.id?' selected':''}>${s.label}</option>`).join('');
   const fiscalVal = f.fiscal_year_end_md || (typeof formatFiscalMd === 'function' ? formatFiscalMd(f.fiscal_year_end) : f.fiscal_year_end);
-  const managerVal = f.fund_managers || f.fund_house_name || '中國平安資產管理（香港）有限公司';
-  const invOpts = `<option value="">空</option><option value="ALL"${f.investor_restriction==='ALL'?' selected':''}>全部</option><option value="PI_ONLY"${f.investor_restriction==='PI_ONLY'?' selected':''}>仅PI</option>`;
+  const managerVal = f.fund_managers || f.fund_house_name || '';
+  const invOpts = `<option value="ALL"${(f.investor_restriction||'ALL')==='ALL'?' selected':''}>全部</option><option value="PI_ONLY"${f.investor_restriction==='PI_ONLY'?' selected':''}>仅PI</option>`;
   document.getElementById('basicFieldsRows').innerHTML = [
     fieldCell('fld_investor_restriction', '投资者限制', '', { select: invOpts, editable: true }),
     fieldCell('fld_broker_id', '经纪商 ID', f.broker_id, { editable: true }),
     fieldCell('fld_broker_name', '经纪商名称', f.broker_name, { editable: true }),
-    fieldCell('fld_dividend_type', '分红类别', '', { select: `<option value="">—</option>${divOpts}`, editable: true }),
+    fieldCell('fld_dividend_type', '分红类别', '', { select: divOpts, editable: true }),
     fieldCell('fld_risk_level', '基金风险等级', '', { required: true, select: `<option value="">请选择</option>${riskOpts}`, editable: true }),
     fieldCell('fld_intra_switch', '是否允许内部转换', '', {
       select: `<option value="false"${!f.is_allow_intra_switch?' selected':''}>否</option><option value="true"${f.is_allow_intra_switch?' selected':''}>是</option>`,
@@ -825,18 +1012,15 @@ function renderBasicFields(f) {
       select: `<option value="">请选择基金公司</option>${pubOpts}`
     }),
     fieldCell('fld_fund_category_type', '基金类别', '', {
-      span: 4, inline: true, editable: true, html: `
-      <select id="fld_fund_category_type">${catOpts}</select>
-      <button type="button" class="btn-sm" onclick="editFundCategory()" title="重命名当前类别">编辑</button>
-      <input id="fld_new_category" placeholder="新建类别名称" style="max-width:160px">
-      <button type="button" class="btn-sm btn-sm-primary" onclick="addFundCategory()">添加</button>`
+      editable: true,
+      select: catOpts || '<option value="MMF">货币基金</option>'
     }),
     fieldCell('fld_fund_managers', '基金经理', managerVal, { span: 4, editable: true }),
-    fieldCell('fld_fund_manager_desc', '基金经理描述', f.fund_manager_desc || '', { textarea: true, editable: true, span: 4 })
+    fieldCell('fld_fund_manager_desc', '基金经理描述', getI18nValue(f, 'fund_manager_desc', uiLang), { textarea: true, editable: true, span: 4 })
   ].join('');
   document.getElementById('fld_risk_level').value = f.fund_inv_risk_level ?? '';
   const divEl = document.getElementById('fld_dividend_type');
-  if (divEl) divEl.value = f.dividend_type || '';
+  if (divEl) divEl.value = f.dividend_type || (DIVIDEND_TYPES?.[0] || '累积型');
   const swEl = document.getElementById('fld_intra_switch');
   if (swEl) swEl.value = f.is_allow_intra_switch ? 'true' : 'false';
   const sel = document.getElementById('fld_fund_house_select');
@@ -846,50 +1030,8 @@ function renderBasicFields(f) {
     if (pub) sel.value = pub.id;
   }
   onFundHouseSelectChange();
-  document.getElementById('fld_subscription_status').value = f.subscription_status || '';
-}
-
-function addFundCategory() {
-  const inp = document.getElementById('fld_new_category');
-  const name = inp?.value?.trim();
-  if (!name) { showToast('请输入类别名称'); return; }
-  saveCustomCategory(name);
-  const sel = document.getElementById('fld_fund_category_type');
-  if (![...sel.options].some(o => o.value === name)) {
-    const o = document.createElement('option');
-    o.value = name; o.textContent = name;
-    sel.appendChild(o);
-  }
-  sel.value = name;
-  inp.value = '';
-  showToast('已添加基金类别：' + name);
-}
-
-function editFundCategory() {
-  const sel = document.getElementById('fld_fund_category_type');
-  const oldVal = sel?.value;
-  if (!oldVal) { showToast('请先选择要修改的类别'); return; }
-  const oldLabel = sel.selectedOptions?.[0]?.textContent || oldVal;
-  const newName = (prompt('重命名基金类别', oldLabel) || '').trim();
-  if (!newName) return;
-  if (newName === oldLabel || newName === oldVal) return;
-  const builtin = (typeof FUND_CATEGORY_TYPES !== 'undefined' ? FUND_CATEGORY_TYPES : []).some(c => c.id === oldVal);
-  if (builtin) {
-    // 内置枚举：保留原 id，仅改展示文案；自定义名写入本地并作为新选项
-    saveCustomCategory(newName);
-    const opt = document.createElement('option');
-    opt.value = newName;
-    opt.textContent = newName;
-    opt.selected = true;
-    sel.appendChild(opt);
-    showToast('已新建类别：' + newName);
-    return;
-  }
-  renameCustomCategory(oldVal, newName);
-  const opt = [...sel.options].find(o => o.value === oldVal);
-  if (opt) { opt.value = newName; opt.textContent = newName; }
-  sel.value = newName;
-  showToast('已重命名：' + oldLabel + ' → ' + newName);
+  const subEl = document.getElementById('fld_subscription_status');
+  if (subEl) subEl.value = f.subscription_status || (SUBSCRIPTION_STATUS_OPTIONS?.[0]?.id || 'open');
 }
 
 function getActivePublishers() {
@@ -911,6 +1053,7 @@ function onFundHouseSelectChange() {
 }
 
 const FIELD_LABELS = {
+  fld_product_code: 'Product Code', fld_isin: 'ISIN', fld_base_ccy: 'Currency', fld_product_name: 'Name',
   fld_risk_level: '基金风险等级', fld_launch_date: '基金成立日', fld_fund_size: '基金规模', fld_fund_house_select: '基金公司',
   sub_min: '起投金额', sub_inc: '递增金额', sub_fee: '认购费率（%）', sub_confirm: '份额确认日期',
   sub_open: '开放周期', sub_lock: '锁定期', sub_red_fee: '赎回费率（%）', sub_red_min: '赎回门槛',
@@ -948,6 +1091,7 @@ function updateSectionStatus() {
   setWarn('tabStatusSubscribe', getMissingLabels(REQUIRED_SUB_IDS));
   setWarn('tabStatusPerf', []);
   setWarn('tabStatusBrochure', []);
+  updateAiTranslateBtn();
 }
 
 function collectMissingRequired() {
@@ -1236,35 +1380,40 @@ function cloneFundDocuments(src) {
   return out;
 }
 
+function brochureDocLang() {
+  // 复用顶部语言：zh-CN / zh-TW / en
+  return uiLang || 'zh-CN';
+}
+
+function brochureLangLabel() {
+  return ({ 'zh-CN': '简体', 'zh-TW': '繁体', en: 'EN' }[brochureDocLang()] || brochureDocLang());
+}
+
+function updateBrochureLangHint() {
+  const el = document.getElementById('brochureLangHint');
+  if (el) el.textContent = `当前展示：${brochureLangLabel()}文件 · 可拖拽至其他分类`;
+}
+
 function renderBrochureDocs() {
   const root = document.getElementById('brochureDocRoot');
   if (!root) return;
+  updateBrochureLangHint();
   const cats = typeof DOC_CATEGORIES !== 'undefined' ? DOC_CATEGORIES : [];
-  const langs = typeof DOC_LANGUAGES !== 'undefined' ? DOC_LANGUAGES : [];
-  root.innerHTML = cats.map(cat => {
-    const activeLang = docLang[cat.id] || 'zh-CN';
-    return `
+  root.innerHTML = cats.map(cat => `
     <div class="doc-cat-block" data-cat="${cat.id}"
       ondragover="onDocDragOver(event)" ondragleave="onDocDragLeave(event)" ondrop="onDocDrop(event,'${cat.id}')">
       <div class="doc-cat-title">${cat.labelZh || cat.label} <span style="font-weight:400;color:#999;font-size:12px">可拖拽文件到其他分类</span></div>
-      <div class="doc-lang-tabs">
-        ${langs.map(l => `<button type="button" class="doc-lang-tab${activeLang === l.id ? ' active' : ''}" onclick="switchDocLang('${cat.id}','${l.id}')">${l.label}</button>`).join('')}
-      </div>
       <div id="doc-list-${cat.id}"></div>
       <div class="file-upload-row" id="upload-row-${cat.id}" style="display:${isReadOnly ? 'none' : 'flex'};padding:8px 20px;gap:8px;align-items:center">
         <input type="file" id="upload-${cat.id}" style="font-size:12px">
         <button type="button" class="btn-sm btn-sm-primary" onclick="uploadBrochureDoc('${cat.id}')">上传</button>
       </div>
-    </div>`;
-  }).join('');
-  cats.forEach(c => {
-    if (!docLang[c.id]) docLang[c.id] = 'zh-CN';
-    renderDocList(c.id);
-  });
+    </div>`).join('');
+  cats.forEach(c => renderDocList(c.id));
 }
 
 function renderDocList(catId) {
-  const lang = docLang[catId] || 'zh-CN';
+  const lang = brochureDocLang();
   const list = fundDocuments[catId]?.[lang] || [];
   const el = document.getElementById('doc-list-' + catId);
   if (!el) return;
@@ -1278,7 +1427,7 @@ function renderDocList(catId) {
 }
 
 function onDocDragStart(e, catId, idx) {
-  dragDoc = { catId, idx, lang: docLang[catId] || 'zh-CN' };
+  dragDoc = { catId, idx, lang: brochureDocLang() };
   e.target.classList.add('dragging');
   e.dataTransfer.effectAllowed = 'move';
 }
@@ -1297,46 +1446,33 @@ function onDocDrop(e, toCatId) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
   if (!dragDoc || dragDoc.catId === toCatId) return;
-  const fromLang = dragDoc.lang;
-  const list = fundDocuments[dragDoc.catId]?.[fromLang];
+  const lang = dragDoc.lang || brochureDocLang();
+  const list = fundDocuments[dragDoc.catId]?.[lang];
   if (!list || !list[dragDoc.idx]) return;
   const [doc] = list.splice(dragDoc.idx, 1);
-  const toLang = docLang[toCatId] || 'zh-CN';
   fundDocuments[toCatId] = fundDocuments[toCatId] || { en: [], 'zh-CN': [], 'zh-TW': [] };
-  fundDocuments[toCatId][toLang] = fundDocuments[toCatId][toLang] || [];
-  fundDocuments[toCatId][toLang].push(doc);
+  fundDocuments[toCatId][lang] = fundDocuments[toCatId][lang] || [];
+  fundDocuments[toCatId][lang].push(doc);
   renderDocList(dragDoc.catId);
   renderDocList(toCatId);
   dragDoc = null;
   showToast('已移动到目标分类');
 }
 
-function switchDocLang(catId, lang) {
-  docLang[catId] = lang;
-  const block = document.querySelector(`.doc-cat-block[data-cat="${catId}"]`);
-  if (block) {
-    const langs = typeof DOC_LANGUAGES !== 'undefined' ? DOC_LANGUAGES : [];
-    block.querySelectorAll('.doc-lang-tab').forEach((t, i) => {
-      t.classList.toggle('active', langs[i]?.id === lang);
-    });
-  }
-  renderDocList(catId);
-}
-
 function uploadBrochureDoc(catId) {
   const input = document.getElementById('upload-' + catId);
   const file = input?.files?.[0];
   if (!file) { showToast('请选择文件'); return; }
-  const lang = docLang[catId] || 'zh-CN';
+  const lang = brochureDocLang();
   fundDocuments[catId] = fundDocuments[catId] || { en: [], 'zh-CN': [], 'zh-TW': [] };
   fundDocuments[catId][lang].push({ doc_name: file.name, doc_url: '#', uploaded: true });
   renderDocList(catId);
   input.value = '';
-  showToast('附件已添加');
+  showToast(`已添加至${brochureLangLabel()}文件`);
 }
 
 function removeBrochureDoc(catId, idx) {
-  const lang = docLang[catId] || 'zh-CN';
+  const lang = brochureDocLang();
   const list = fundDocuments[catId]?.[lang];
   if (!list) return;
   list.splice(idx, 1);
@@ -1376,16 +1512,181 @@ function syncWebsiteUrlUi() {
   }
 }
 
+function syncI18nFieldsFromDom() {
+  if (!fund || isReadOnly) return;
+  const nameEl = document.getElementById('fld_product_name');
+  if (nameEl) setI18nValue(fund, 'product_name', uiLang, nameEl.value);
+  const objEl = document.getElementById('fundObjective');
+  if (objEl) setI18nValue(fund, 'fund_objective', uiLang, objEl.value);
+  const stratEl = document.getElementById('fundStrategy');
+  if (stratEl) setI18nValue(fund, 'strategy', uiLang, stratEl.value);
+  const descEl = document.getElementById('fld_fund_manager_desc');
+  if (descEl) setI18nValue(fund, 'fund_manager_desc', uiLang, descEl.value);
+}
+
+function applyI18nFieldsToDom() {
+  if (!fund) return;
+  const nameEl = document.getElementById('fld_product_name');
+  if (nameEl) nameEl.value = getI18nValue(fund, 'product_name', uiLang);
+  document.getElementById('fundObjective').value = getI18nValue(fund, 'fund_objective', uiLang);
+  document.getElementById('fundStrategy').value = getI18nValue(fund, 'strategy', uiLang);
+  const descEl = document.getElementById('fld_fund_manager_desc');
+  if (descEl) descEl.value = getI18nValue(fund, 'fund_manager_desc', uiLang);
+  document.getElementById('fundTitle').textContent =
+    getI18nValue(fund, 'product_name', uiLang) || fund.product_name || (isCreateMode ? '新增产品' : '—');
+  updateAiTranslateBtn();
+}
+
+function canUseAiBatchTranslate() {
+  if (!fund || isReadOnly || fund.i18n_translated) return false;
+  // 须先成功保存过（新增未保存不可点；编辑已有产品视为已保存）
+  if (isCreateMode) return false;
+  return collectMissingRequired().length === 0;
+}
+
+function updateAiTranslateBtn() {
+  const btn = document.getElementById('btnAiTranslate');
+  const tipEl = document.getElementById('aiTranslateTip');
+  if (!btn) return;
+  const tip = '请先完善并保存当前语言后再翻译';
+  if (tipEl) tipEl.textContent = tip;
+  if (fund?.i18n_translated) {
+    btn.disabled = true;
+    btn.textContent = '已完成首次翻译';
+    btn.title = '首次翻译已完成；之后各语言独立编辑，互不联动';
+    if (tipEl) tipEl.style.display = 'none';
+    return;
+  }
+  btn.textContent = '首次AI 批量翻译';
+  const ok = canUseAiBatchTranslate();
+  btn.disabled = isReadOnly || !ok;
+  btn.title = ok
+    ? '以当前语言内容为源，批量翻译到其他语言（仅首次）'
+    : tip;
+  if (tipEl) tipEl.style.display = (!isReadOnly && !ok) ? 'block' : 'none';
+}
+
+function switchProductLang(lang) {
+  if (!fund || lang === uiLang) return;
+  syncI18nFieldsFromDom();
+  uiLang = lang;
+  document.querySelectorAll('#productLangSwitch button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+  renderAyersTable(fund);
+  renderBasicFields(fund);
+  applyI18nFieldsToDom();
+  renderBrochureDocs();
+  showToast('已切换至 ' + ({ 'zh-CN': '简体', 'zh-TW': '繁体', en: 'EN' }[lang] || lang));
+}
+
+function mockTranslate(text, from, to) {
+  if (!text) return '';
+  if (from === to) return text;
+  const s2t = {
+    '中国': '中國', '精选': '精選', '投资': '投資', '货币': '貨幣', '透过': '透過', '优质': '優質',
+    '市场': '市場', '资本': '資本', '稳定': '穩定', '流动': '流動', '为': '為', '投资者': '投資者',
+    '竞争': '競爭', '回报': '回報', '具备': '具備', '经验': '經驗', '专注': '專注', '于': '於',
+    '风险': '風險', '开泰': '開泰', '广发': '廣發', '博时': '博時', '资产': '資產', '管理': '管理',
+    '目标': '目標', '描述': '描述', '系列': '系列', '固定': '固定', '收益': '收益', '控制': '控制'
+  };
+  const t2s = Object.fromEntries(Object.entries(s2t).map(([a, b]) => [b, a]));
+  const phraseEn = {
+    '中国平安精选投资基金系列 - 平安货币基金': 'Ping An Selection Investment Fund Series - Ping An Money Market Fund',
+    '透过投资于短期存款及优质货币市场工具，在保持资本稳定及高流动性的前提下，为投资者提供具竞争力的回报。':
+      'To provide competitive returns by investing in short-term deposits and high-quality money market instruments, while maintaining capital stability and high liquidity.',
+    '主要投资美元短期存款及优质货币市场工具': 'Primarily invests in USD short-term deposits and high-quality money market instruments.',
+    '具备多年货币市场及固定收益投资管理经验，专注于流动性管理与风险控制。':
+      'Experienced in money market and fixed income investment management, focusing on liquidity management and risk control.',
+    '泰康开泰美元货币基金': 'Taikang Kaitai US Dollar Money Market Fund',
+    '投资于优质美元货币市场工具': 'Invests in high-quality USD money market instruments'
+  };
+  const applyMap = (src, map) => {
+    let out = src;
+    Object.keys(map).sort((a, b) => b.length - a.length).forEach(k => { out = out.split(k).join(map[k]); });
+    return out;
+  };
+  if (to === 'en') return phraseEn[text] || text;
+  if (from === 'en' && to === 'zh-CN') {
+    const rev = Object.fromEntries(Object.entries(phraseEn).map(([k, v]) => [v, k]));
+    return rev[text] || text;
+  }
+  if (to === 'zh-TW') return applyMap(from === 'en' ? mockTranslate(text, 'en', 'zh-CN') : text, s2t);
+  if (to === 'zh-CN' && from === 'zh-TW') return applyMap(text, t2s);
+  if (from === 'en' && to === 'zh-TW') return mockTranslate(mockTranslate(text, 'en', 'zh-CN'), 'zh-CN', 'zh-TW');
+  return text;
+}
+
+function seedDemoI18n(p) {
+  ensureI18n(p);
+  const zh = p.product_name || '';
+  const en = p.product_name_en || mockTranslate(zh, 'zh-CN', 'en') || zh;
+  if (!p.i18n.product_name['zh-CN']) p.i18n.product_name['zh-CN'] = zh;
+  if (!p.i18n.product_name.en) p.i18n.product_name.en = en;
+  if (!p.i18n.product_name['zh-TW']) p.i18n.product_name['zh-TW'] = mockTranslate(zh, 'zh-CN', 'zh-TW');
+  ['fund_objective', 'strategy', 'fund_manager_desc'].forEach(field => {
+    const src = p[field] || p.i18n[field]['zh-CN'] || '';
+    if (!src) return;
+    if (!p.i18n[field]['zh-CN']) p.i18n[field]['zh-CN'] = src;
+    if (!p.i18n[field]['zh-TW']) p.i18n[field]['zh-TW'] = mockTranslate(src, 'zh-CN', 'zh-TW');
+    if (!p.i18n[field].en) {
+      const enVal = mockTranslate(src, 'zh-CN', 'en');
+      p.i18n[field].en = enVal === src ? src : enVal;
+    }
+  });
+}
+
+function aiBatchTranslate() {
+  if (!fund || isReadOnly) return;
+  if (fund.i18n_translated) { showToast('已完成首次翻译，请分别编辑各语言'); return; }
+  syncI18nFieldsFromDom();
+  if (!canUseAiBatchTranslate()) {
+    showToast('请先完善并保存当前语言后再翻译');
+    updateAiTranslateBtn();
+    return;
+  }
+  const sourceLang = uiLang;
+  showToast('AI 正在批量翻译…');
+  setTimeout(() => {
+    ['zh-CN', 'zh-TW', 'en'].forEach(lang => {
+      if (lang === sourceLang) return;
+      i18nFieldList().forEach(field => {
+        const src = getI18nValue(fund, field, sourceLang);
+        if (src && !getI18nValue(fund, field, lang)) {
+          setI18nValue(fund, field, lang, mockTranslate(src, sourceLang, lang));
+        }
+      });
+    });
+    fund.i18n_source_lang = sourceLang;
+    fund.i18n_translated = true;
+    pushOpLog(`POST /api/mof/funds/${fund.product_code || 'new'}/i18n/ai-translate source=${sourceLang}`, fund.product_code);
+    updateAiTranslateBtn();
+    showToast('首次 AI 批量翻译完成；之后各语言独立编辑，不联动');
+  }, 800);
+}
+
 function loadDetail(code) {
   initDetailTabs();
-  fund = findFund(code) || findFund('HK0000720752');
+  uiLang = 'zh-CN';
+  document.querySelectorAll('#productLangSwitch button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === 'zh-CN');
+  });
+
+  if (isCreateMode || !code) {
+    fund = createEmptyFund();
+    isCreateMode = true;
+  } else {
+    fund = findFund(code) || findFund('HK0000720752');
+  }
   if (!fund) {
     document.getElementById('fundTitle').textContent = '未找到产品';
     return;
   }
-  const c = fund.product_code === 'HK0000720752' ? (typeof PINGAN_PAMMF !== 'undefined' ? PINGAN_PAMMF : null) : null;
+  ensureI18n(fund);
+  if (!isCreateMode) seedDemoI18n(fund);
+  const c = !isCreateMode && fund.product_code === 'HK0000720752' ? (typeof PINGAN_PAMMF !== 'undefined' ? PINGAN_PAMMF : null) : null;
 
-  document.getElementById('fundTitle').textContent = fund.product_name;
+  document.getElementById('fundTitle').textContent = getI18nValue(fund, 'product_name', uiLang) || fund.product_name || (isCreateMode ? '新增产品' : '—');
   const urlEl = document.getElementById('fld_website_url');
   if (urlEl) {
     urlEl.value = fund.website_url || '';
@@ -1396,20 +1697,28 @@ function loadDetail(code) {
   }
   syncWebsiteUrlUi();
   const scrapeTxt = formatScrapeTimeDisplay(fund.last_scrape_at);
-  document.getElementById('scrapeTimeDisplay').textContent = scrapeTxt;
+  const scrapeEl = document.getElementById('scrapeTimeDisplay');
+  if (scrapeEl) { scrapeEl.textContent = scrapeTxt; scrapeEl.style.display = 'none'; }
   const headerScrape = document.getElementById('headerScrapeTime');
   if (headerScrape) headerScrape.textContent = scrapeTxt;
+  const updatedEl = document.getElementById('lastUpdatedDisplay');
+  if (updatedEl) updatedEl.style.display = 'none';
 
   featured = !!fund.is_featured;
   document.getElementById('featuredSwitch').classList.toggle('on', featured);
   document.getElementById('productStatus').value = fund.product_status || 'DELISTED';
+  const sortEl = document.getElementById('fld_featured_sort');
+  if (sortEl) {
+    sortEl.value = fund.featured_sort != null && fund.featured_sort !== '' ? fund.featured_sort : '';
+    sortEl.readOnly = isReadOnly;
+    sortEl.disabled = isReadOnly;
+  }
 
   renderAyersTable(fund);
   renderBasicFields(fund);
+  applyI18nFieldsToDom();
 
   selectedPublisher = matchPublisher(fund.fund_house_name);
-  document.getElementById('fundObjective').value = fund.fund_objective || '';
-  document.getElementById('fundStrategy').value = fund.strategy || '';
   tags = [...(fund.product_tags || [])];
   renderTags();
 
@@ -1428,7 +1737,7 @@ function loadDetail(code) {
 
   document.getElementById('navColHead').textContent = `基金净值 (${sc} ${ccy})`;
   selectedNavDates.clear();
-  navData = (fund.nav_history || NAV_ROWS).map(r => ({ ...r }));
+  navData = (fund.nav_history || (isCreateMode ? [] : NAV_ROWS)).map(r => ({ ...r }));
   initNavFilters();
   filterNavRows();
 
@@ -1472,27 +1781,48 @@ function loadDetail(code) {
   document.querySelectorAll('.tab-panel').forEach((p,i) => p.classList.toggle('active', i===0));
   bindRequiredWatchers();
   updateSectionStatus();
+  renderOpLog();
+  updateAiTranslateBtn();
 }
 
 function saveProduct() {
   if (!fund) return;
+  syncI18nFieldsFromDom();
   const missing = collectMissingRequired();
   if (missing.length) {
     showToast('必填项' + missing.join('、') + '未填');
     return;
   }
+  const newCode = (document.getElementById('fld_product_code')?.value || '').trim();
+  if (!newCode) { showToast('Product Code 必填'); return; }
+  if (isCreateMode && MMF_PRODUCTS.some(p => p.product_code === newCode)) {
+    showToast('Product Code 已存在：' + newCode);
+    return;
+  }
+  if (!isCreateMode && fund.product_code !== newCode && MMF_PRODUCTS.some(p => p.product_code === newCode)) {
+    showToast('Product Code 已存在：' + newCode);
+    return;
+  }
+
+  fund.exchange_code = document.getElementById('fld_exchange_code')?.value.trim() || '';
+  fund.product_code = newCode;
+  fund.default_isin = document.getElementById('fld_isin')?.value.trim() || '';
+  fund.base_ccy = document.getElementById('fld_base_ccy')?.value || '';
+  fund.price_spread_code = document.getElementById('fld_price_spread_code')?.value.trim() || '';
+  fund.product_name = getI18nValue(fund, 'product_name', 'zh-CN') || document.getElementById('fld_product_name')?.value || '';
+
   fund.share_class_label = document.getElementById('fld_share_class').value;
   fund.fund_category_type = document.getElementById('fld_fund_category_type')?.value || '';
   fund.fund_category = fund.fund_category_type || fund.fund_category;
   fund.subscription_status = document.getElementById('fld_subscription_status')?.value || '';
-  fund.investor_restriction = document.getElementById('fld_investor_restriction')?.value || '';
+  fund.investor_restriction = document.getElementById('fld_investor_restriction')?.value || 'ALL';
   fund.launch_date = document.getElementById('fld_launch_date').value;
   fund.fiscal_year_end = readFiscalMd();
   fund.trustee = document.getElementById('fld_trustee').value;
   fund.fund_size = document.getElementById('fld_fund_size').value;
   fund.fund_managers = document.getElementById('fld_fund_managers').value;
   fund.website_url = document.getElementById('fld_website_url')?.value.trim() || '';
-  fund.fund_manager_desc = document.getElementById('fld_fund_manager_desc')?.value || '';
+  fund.fund_manager_desc = getI18nValue(fund, 'fund_manager_desc', 'zh-CN');
   fund.broker_id = document.getElementById('fld_broker_id')?.value || fund.broker_id;
   fund.broker_name = document.getElementById('fld_broker_name')?.value || fund.broker_name;
   fund.dividend_type = document.getElementById('fld_dividend_type')?.value || '';
@@ -1501,10 +1831,12 @@ function saveProduct() {
   const pubSel = document.getElementById('fld_fund_house_select');
   fund.fund_house_name = selectedPublisher?.fund_company_name
     || (pubSel?.selectedOptions?.[0]?.textContent) || fund.fund_house_name;
-  fund.fund_objective = document.getElementById('fundObjective').value;
-  fund.strategy = document.getElementById('fundStrategy').value;
+  fund.fund_objective = getI18nValue(fund, 'fund_objective', 'zh-CN');
+  fund.strategy = getI18nValue(fund, 'strategy', 'zh-CN');
   fund.product_tags = [...tags];
   fund.is_featured = featured;
+  const sortRaw = document.getElementById('fld_featured_sort')?.value;
+  fund.featured_sort = sortRaw === '' || sortRaw == null ? null : Number(sortRaw);
   fund.product_status = document.getElementById('productStatus').value;
   fund.perf = fund.perf || { annual: {}, monthly: {} };
   syncCumColumnLabels();
@@ -1546,9 +1878,21 @@ function saveProduct() {
   };
   fund.fund_documents = cloneFundDocuments(fundDocuments);
   fund.internal_remarks = document.getElementById('internalRemarks').value;
-  fund.updated_at = new Date().toISOString().slice(0,10);
+  const ts = nowDateTime();
+  if (isCreateMode) {
+    fund.created_at = fund.created_at || ts;
+    fund.updated_at = ts;
+    MMF_PRODUCTS.unshift(fund);
+    pushOpLog(`POST /api/mof/funds`, fund.product_code);
+    isCreateMode = false;
+  } else {
+    fund.updated_at = ts;
+    pushOpLog(`PUT /api/mof/funds/${fund.product_code}`, fund.product_code);
+  }
   showToast('保存成功');
-  setTimeout(() => Router.go('/list'), 1000);
+  updateAiTranslateBtn();
+  applyFilters();
+  updateStats();
 }
 
 function scrapePublicData() {
@@ -1559,7 +1903,8 @@ function scrapePublicData() {
     const ts = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
     if (fund) fund.last_scrape_at = ts;
     const txt = formatScrapeTimeDisplay(ts);
-    document.getElementById('scrapeTimeDisplay').textContent = txt;
+    const scrapeEl = document.getElementById('scrapeTimeDisplay');
+    if (scrapeEl) { scrapeEl.textContent = txt; scrapeEl.style.display = 'none'; }
     const headerScrape = document.getElementById('headerScrapeTime');
     if (headerScrape) headerScrape.textContent = txt;
     if (fund?.product_code === 'HK0000720752' && typeof PINGAN_PAMMF !== 'undefined') {
@@ -1664,21 +2009,34 @@ function handleImportFile() {
 
 document.addEventListener('DOMContentLoaded', () => {
   const tbody = document.getElementById('tableBody');
-  if (typeof MMF_PRODUCTS === 'undefined') {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="empty-state">数据文件加载失败，请确认 data/mmf_products.js 可访问</td></tr>';
+  if (typeof MMF_PRODUCTS === 'undefined' || !Array.isArray(MMF_PRODUCTS)) {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="empty-state">数据文件加载失败，请确认 data/mmf_products.js 可访问（可尝试强制刷新 Cmd+Shift+R）</td></tr>';
+    console.error('MMF_PRODUCTS missing');
     return;
   }
-  filtered = [...MMF_PRODUCTS];
+  // 补齐演示用最后更新时间；精选排序为空则保持空白
   try {
+    MMF_PRODUCTS.forEach((p) => {
+      if (!p.updated_at) p.updated_at = '2026-07-08 15:30';
+      else if (/^\d{4}-\d{2}-\d{2}$/.test(String(p.updated_at))) p.updated_at = p.updated_at + ' 12:00';
+      if (p.featured_sort == null) p.featured_sort = null;
+      seedDemoI18n(p);
+    });
+    filtered = [...MMF_PRODUCTS];
     updateStats();
-    renderTable(filtered);
+    applyFilters(); // 与筛选项默认「货币型基金」保持一致
   } catch (e) {
     console.error(e);
-    if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="empty-state">页面渲染失败：' + e.message + '</td></tr>';
+    filtered = [...MMF_PRODUCTS];
+    if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="empty-state">页面渲染失败：' + e.message + '</td></tr>';
   }
   document.getElementById('searchInput')?.addEventListener('keypress', e => { if (e.key==='Enter') applyFilters(); });
   document.getElementById('tagInput')?.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); addTag(); } });
-  Router.init();
+  document.getElementById('productLangSwitch')?.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-lang]');
+    if (btn) switchProductLang(btn.dataset.lang);
+  });
+  try { Router.init(); } catch (e) { console.error(e); showToast('路由初始化失败：' + e.message); }
 });
 </script>
 </body>
