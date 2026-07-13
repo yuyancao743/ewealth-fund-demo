@@ -133,9 +133,9 @@ const SUBSCRIBE_HOTLINE = '+852 2153 3838';
 const SUBSCRIBE_HOTLINE_TEL = 'tel:+85221533838';
 
 const EWEALTH_BANNERS = [
-  { id: 1, title: '精选货币基金', subtitle: '稳健收益，灵活申赎，低至 USD 1 起投', position: 'ewealthhub-产品甄选-基金产品banner位', sort: 1, status: 'ACTIVE', valid_from: '2026-01-01 00:00', valid_to: '2026-12-31 23:59', gradient: 'linear-gradient(135deg,#1e3a5f,#2563eb)' },
-  { id: 2, title: '平安货币基金上新', subtitle: 'I类美元份额 · 官网业绩同步', position: 'ewealthhub-产品甄选-基金产品banner位', sort: 2, status: 'ACTIVE', valid_from: '2026-06-01 00:00', valid_to: '2026-12-31 23:59', gradient: 'linear-gradient(135deg,#0f766e,#14b8a6)' },
-  { id: 3, title: '泰康系列货基', subtitle: '美元 / 港元双币种可选', position: 'ewealthhub-产品甄选-基金产品banner位', sort: 3, status: 'INACTIVE', valid_from: '2025-01-01 00:00', valid_to: '2025-12-31 23:59', gradient: 'linear-gradient(135deg,#7c3aed,#a78bfa)' }
+  { id: 1, title: '精选货币基金', position: 'ewealthhub-产品甄选-基金产品banner位', sort: 1, status: 'ACTIVE', valid_from: '2026-01-01 00:00', valid_to: '2026-12-31 23:59', gradient: 'linear-gradient(135deg,#1e3a5f,#2563eb)', image_i18n: { 'zh-CN': '', 'zh-TW': '', en: 'demo/banner-en.png' }, image_url: '' },
+  { id: 2, title: '平安货币基金上新', position: 'ewealthhub-产品甄选-基金产品banner位', sort: 2, status: 'ACTIVE', valid_from: '2026-06-01 00:00', valid_to: '2026-12-31 23:59', gradient: 'linear-gradient(135deg,#0f766e,#14b8a6)', image_i18n: { 'zh-CN': 'demo/banner-zh.png', 'zh-TW': '', en: 'demo/banner-en.png' }, image_url: 'demo/banner-zh.png' },
+  { id: 3, title: '泰康系列货基', position: 'ewealthhub-产品甄选-基金产品banner位', sort: 3, status: 'INACTIVE', valid_from: '2025-01-01 00:00', valid_to: '2025-12-31 23:59', gradient: 'linear-gradient(135deg,#7c3aed,#a78bfa)', image_i18n: { 'zh-CN': 'demo/banner-zh.png', 'zh-TW': 'demo/banner-tw.png', en: 'demo/banner-en.png' }, image_url: 'demo/banner-zh.png' }
 ];
 
 function perf(m1, m3, m6, ytd, y1, y3, rsi, mtd, annual, monthly) {
