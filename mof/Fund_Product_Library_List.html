@@ -1896,8 +1896,20 @@ function saveProduct() {
 }
 
 function scrapePublicData() {
+  if (isReadOnly) return;
+  if (isCreateMode) {
+    showToast('请先保存产品后再抓取');
+    return;
+  }
+  const website = (document.getElementById('fld_website_url')?.value || fund?.website_url || '').trim();
   showToast('正在抓取官网公共数据…');
   setTimeout(() => {
+    // 原型：无官网 URL 视为失败（反爬/超时/无数据等统一失败文案）
+    if (!website) {
+      showToast('抓取失败，请检查配置或稍后重试；如持续失败，请联系开发处理');
+      pushOpLog(`POST /api/mof/funds/${fund?.product_code || ''}/scrape → FAILED`, fund?.product_code);
+      return;
+    }
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     const ts = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -1919,7 +1931,8 @@ function scrapePublicData() {
       renderBrochureDocs();
     }
     updateSectionStatus();
-    showToast('抓取完成');
+    pushOpLog(`POST /api/mof/funds/${fund?.product_code || ''}/scrape → SUCCESS`, fund?.product_code);
+    showToast('抓取成功');
   }, 1200);
 }
 

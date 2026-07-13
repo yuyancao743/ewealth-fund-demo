@@ -648,8 +648,17 @@
 
         function bannerImageSummary(b) {
             const img = b.image_i18n || {};
-            const ok = ['zh-CN', 'zh-TW', 'en'].filter(l => img[l]).length;
-            return ok ? `已传 ${ok}/3 语言` : '未上传';
+            const langs = [
+                { id: 'zh-CN', label: '简体' },
+                { id: 'zh-TW', label: '繁体' },
+                { id: 'en', label: 'EN' }
+            ];
+            const uploaded = langs.filter(l => String(img[l.id] || '').trim());
+            const missing = langs.filter(l => !String(img[l.id] || '').trim());
+            if (!uploaded.length) return '未上传';
+            const tip = `已传：${uploaded.map(l => l.label).join('、')}` +
+                (missing.length ? `；缺：${missing.map(l => l.label).join('、')}` : '');
+            return `<span title="${tip}">已传 ${uploaded.length}/3 语言</span>`;
         }
 
         function syncDraftImageFromInput() {
