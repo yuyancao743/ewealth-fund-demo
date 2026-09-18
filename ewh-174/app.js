@@ -181,10 +181,6 @@
       subName: '马三零',
       isPI: true,
       piType: '个人专业投资者',
-      riskLevel: 'R3 中风险',
-      riskStatus: '有效',
-      riskCompleteDate: '2025-11-20',
-      riskPdf: '风险问卷.pdf',
       piCompleteDate: '2025-10-02',
       piPdf: '专业投资者声明书.pdf',
       openTime: '2022-04-16',
@@ -517,8 +513,25 @@
     return 'personal';
   }
 
+  function hasRiskInfo(c) {
+    return !!(c.riskLevel || c.riskStatus || c.riskCompleteDate || c.riskPdf);
+  }
+
+  function hasPiInfo(c) {
+    return !!c.isPI;
+  }
+
+  function riskPiTabLabel(c) {
+    const risk = hasRiskInfo(c);
+    const pi = hasPiInfo(c);
+    if (risk && pi) return '风险测评与 PI';
+    if (pi) return '专业投资者 (PI) 认证';
+    if (risk) return '风险测评';
+    return '';
+  }
+
   function riskPiHtml(c) {
-    const risk = `<div class="mod">
+    const risk = hasRiskInfo(c) ? `<div class="mod">
       <div class="mod-h">风险测评</div>
       <dl class="kv">
         ${kv('风险等级', c.riskLevel)}
@@ -526,8 +539,8 @@
         ${kv('问卷完成日', c.riskCompleteDate)}
       </dl>
       ${c.riskPdf ? `<p class="pdf-row">最近一次：<button class="link" type="button" onclick="EWH.openPdf('${esc(c.riskPdf)}')">${esc(c.riskPdf)}</button></p>` : ''}
-    </div>`;
-    const pi = c.isPI ? `<div class="mod">
+    </div>` : '';
+    const pi = hasPiInfo(c) ? `<div class="mod">
       <div class="mod-h">专业投资者 (PI) 认证</div>
       <dl class="kv">
         ${kv('是否 PI', '是')}
@@ -536,7 +549,6 @@
       </dl>
       ${c.piPdf ? `<p class="pdf-row">最近一次：<button class="link" type="button" onclick="EWH.openPdf('${esc(c.piPdf)}')">${esc(c.piPdf)}</button></p>` : ''}
     </div>` : '';
-    if (!c.riskLevel && !c.riskStatus && !c.riskCompleteDate && !c.isPI) return '';
     return risk + pi;
   }
 
@@ -563,9 +575,12 @@
   function fillDrawer(c) {
     current = c;
     const riskBtn = document.querySelector('#infoDrawer .nav-item[data-tab="risk"]');
-    const hasRisk = !!(c.riskLevel || c.riskStatus || c.riskCompleteDate || c.isPI);
-    if (riskBtn) riskBtn.style.display = hasRisk ? '' : 'none';
-    if (!hasRisk && drawerTab === 'risk') drawerTab = 'open';
+    const label = riskPiTabLabel(c);
+    if (riskBtn) {
+      riskBtn.textContent = label || '风险测评与 PI';
+      riskBtn.style.display = label ? '' : 'none';
+    }
+    if (!label && drawerTab === 'risk') drawerTab = 'open';
     setDrawerTab(drawerTab);
   }
 
@@ -577,7 +592,7 @@
     const body = document.getElementById('infoBody');
     if (tab === 'risk') {
       const html = riskPiHtml(current);
-      body.innerHTML = html || '<p class="empty">暂无风险测评与 PI 资料</p>';
+      body.innerHTML = html || `<p class="empty">暂无${esc(riskPiTabLabel(current) || '风险测评与 PI')}资料</p>`;
       return;
     }
     allRevealed = false;
