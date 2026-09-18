@@ -521,16 +521,15 @@
     return !!c.isPI;
   }
 
-  function riskPiTabLabel(c) {
-    const risk = hasRiskInfo(c);
-    const pi = hasPiInfo(c);
-    if (risk && pi) return '风险测评与 PI';
-    if (pi) return '专业投资者 (PI) 认证';
-    if (risk) return '风险测评';
-    return '';
+  function emptyMod(title, msg) {
+    return `<div class="mod">
+      <div class="mod-h">${esc(title)}</div>
+      <p class="mod-empty">${esc(msg)}</p>
+    </div>`;
   }
 
   function riskPiHtml(c) {
+    if (!hasRiskInfo(c) && !hasPiInfo(c)) return '';
     const risk = hasRiskInfo(c) ? `<div class="mod">
       <div class="mod-h">风险测评</div>
       <dl class="kv">
@@ -539,7 +538,7 @@
         ${kv('问卷完成日', c.riskCompleteDate)}
       </dl>
       ${c.riskPdf ? `<p class="pdf-row">最近一次：<button class="link" type="button" onclick="EWH.openPdf('${esc(c.riskPdf)}')">${esc(c.riskPdf)}</button></p>` : ''}
-    </div>` : '';
+    </div>` : emptyMod('风险测评', '暂无风险测评资料');
     const pi = hasPiInfo(c) ? `<div class="mod">
       <div class="mod-h">专业投资者 (PI) 认证</div>
       <dl class="kv">
@@ -548,7 +547,7 @@
         ${kv('PI到期日', piExpireFromSubmit(c.piCompleteDate))}
       </dl>
       ${c.piPdf ? `<p class="pdf-row">最近一次：<button class="link" type="button" onclick="EWH.openPdf('${esc(c.piPdf)}')">${esc(c.piPdf)}</button></p>` : ''}
-    </div>` : '';
+    </div>` : emptyMod('专业投资者 (PI) 认证', '暂无专业投资者 (PI) 认证资料');
     return risk + pi;
   }
 
@@ -575,12 +574,9 @@
   function fillDrawer(c) {
     current = c;
     const riskBtn = document.querySelector('#infoDrawer .nav-item[data-tab="risk"]');
-    const label = riskPiTabLabel(c);
-    if (riskBtn) {
-      riskBtn.textContent = label || '风险测评与 PI';
-      riskBtn.style.display = label ? '' : 'none';
-    }
-    if (!label && drawerTab === 'risk') drawerTab = 'open';
+    const showTab = hasRiskInfo(c) || hasPiInfo(c);
+    if (riskBtn) riskBtn.style.display = showTab ? '' : 'none';
+    if (!showTab && drawerTab === 'risk') drawerTab = 'open';
     setDrawerTab(drawerTab);
   }
 
@@ -592,7 +588,7 @@
     const body = document.getElementById('infoBody');
     if (tab === 'risk') {
       const html = riskPiHtml(current);
-      body.innerHTML = html || `<p class="empty">暂无${esc(riskPiTabLabel(current) || '风险测评与 PI')}资料</p>`;
+      body.innerHTML = html || '<p class="empty">暂无风险测评与 PI 资料</p>';
       return;
     }
     allRevealed = false;
